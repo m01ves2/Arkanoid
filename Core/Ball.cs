@@ -23,9 +23,41 @@ namespace Arkanoid.Core
         public void Update(GameTime gameTime, int screenWidth, int screenHeight, Paddle paddle)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
             _position += _velocity * dt;
+        }
 
+        public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+        {
+            var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
+            spriteBatch.Draw(pixel, rect, Color.Yellow);
+        }
+        public void OnBrickCollision()
+        {
+            _velocity.Y *= -1;
+        }
+
+        public void OnPaddleCollision(Paddle paddle)
+        {
+            var paddleRect = paddle.Bounds;
+
+            float paddleCenter = paddleRect.X + paddleRect.Width / 2f;
+            float ballCenter = _position.X + Size / 2f;
+
+            float offset = ballCenter - paddleCenter;
+            float normalized = offset / (paddleRect.Width / 2f);
+
+            float maxAngleX = 300f;
+
+            _velocity.X = normalized * maxAngleX;
+            _velocity.Y = -MathF.Abs(_velocity.Y);
+
+
+            // чуть “раздвигаем” шар, чтобы не залипал
+            _position.Y = paddle.Bounds.Y - Size;
+        }
+
+        public void OnWallCollision(int screenWidth, int screenHeight)
+        {
             // отскок от стен
 
             // левая / правая
@@ -42,46 +74,6 @@ namespace Arkanoid.Core
             if (_position.Y + Size >= screenHeight) {
                 _velocity.Y *= -1;
             }
-
-            if (IsCollidingWithPaddle(paddle)) {
-                var paddleRect = paddle.Bounds;
-
-                float paddleCenter = paddleRect.X + paddleRect.Width / 2f;
-                float ballCenter = _position.X + Size / 2f;
-
-                float offset = ballCenter - paddleCenter;
-                float normalized = offset / (paddleRect.Width / 2f);
-
-                float maxAngleX = 300f;
-
-                _velocity.X = normalized * maxAngleX;
-                _velocity.Y = -MathF.Abs(_velocity.Y);
-
-
-                // чуть “раздвигаем” шар, чтобы не залипал
-                _position.Y = paddle.Bounds.Y - Size;
-            }
-        }
-
-        public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
-        {
-            var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
-
-            spriteBatch.Draw(pixel, rect, Color.Yellow);
-        }
-
-        private bool IsCollidingWithPaddle(Paddle paddle)
-        {
-            var ballRect = this.Bounds;
-
-            var paddleRect = paddle.Bounds;
-
-            return ballRect.Intersects(paddleRect);
-        }
-
-        public void OnBrickCollision()
-        {
-            _velocity.Y *= -1;
         }
     }
 }

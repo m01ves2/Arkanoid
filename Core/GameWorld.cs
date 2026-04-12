@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Arkanoid.Systems;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Drawing;
@@ -34,8 +35,11 @@ namespace Arkanoid.Core
             _paddle.Update(gameTime);
             _ball.Update(gameTime, screenWidth, screenHeight, _paddle);
 
-            ProcessCollidingBallWithBricks();
+            CollisionSystem.HandleBallPaddle(_ball, _paddle);
+            CollisionSystem.HandleBallBrick(_ball, _bricks);
+            CollisionSystem.HandleBallWall(_ball, screenWidth, screenHeight);
         }
+        
 
         public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
         {
@@ -44,20 +48,6 @@ namespace Arkanoid.Core
 
             foreach (var brick in _bricks) {
                 brick.Draw(spriteBatch, pixel);
-            }
-        }
-
-        private void ProcessCollidingBallWithBricks()
-        {
-            var ballRect = _ball.Bounds;
-
-            for (int i = 0; i < _bricks.Count; i++) {
-                var brickRect = _bricks[i].Bounds;
-                if (ballRect.Intersects(brickRect)) {
-                    _bricks.RemoveAt(i);
-                    _ball.OnBrickCollision();
-                    break;
-                }
             }
         }
     }
