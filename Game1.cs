@@ -15,6 +15,7 @@ public class Game1 : Game
     //private int _fps;
 
     private Texture2D _whitePixel;
+    private Core.GameWorld _world;
 
     public Game1()
     {
@@ -31,6 +32,7 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
+        _world = new Core.GameWorld();
 
         base.Initialize();
     }
@@ -49,6 +51,19 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
+        // TODO: Add your update logic here
+        //_frameCount++;
+
+        //_elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
+
+        //if (_elapsedTime >= 1.0) {
+        //    _fps = _frameCount;
+        //    _frameCount = 0;
+        //    _elapsedTime = 0;
+        //}
+
+        _world.Update( gameTime, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height );
+
         base.Update(gameTime);
         
     }
@@ -58,9 +73,11 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         // TODO: Add your drawing code here
+        //System.Diagnostics.Debug.WriteLine($"FPS: {_fps}");
 
         _spriteBatch.Begin();
 
+        _world.Draw(_spriteBatch, _whitePixel);
 
         _spriteBatch.End();
 

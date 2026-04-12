@@ -1,0 +1,38 @@
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+
+namespace Arkanoid.Core
+{
+    public class Paddle
+    {
+        private Vector2 _position;
+
+        private const int Width = 120;
+        private const int Height = 20;
+        private const float Speed = 400f;
+        public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
+        public Paddle(Vector2 startPosition)
+        {
+            _position = startPosition;
+        }
+
+        public void Update(GameTime gameTime)
+        {
+            var keyboard = Keyboard.GetState();
+
+            if (keyboard.IsKeyDown(Keys.Left))
+                _position.X -= Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (keyboard.IsKeyDown(Keys.Right))
+                _position.X += Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }
+
+        public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+        {
+            var rect = new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
+
+            spriteBatch.Draw(pixel, rect, Color.White);
+        }
+    }
+}
