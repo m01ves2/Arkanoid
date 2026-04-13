@@ -10,7 +10,8 @@ namespace Arkanoid.Core
         private int _angle;
         private Vector2 _position;
         private Vector2 _velocity;
-        private const float _speed = 400f;
+        private float _speed = 300f;
+        private const float _maxSpeed = 800f;
         private const int Size = 16;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
 
@@ -34,15 +35,6 @@ namespace Arkanoid.Core
         {
             var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
             spriteBatch.Draw(pixel, rect, Color.Yellow);
-        }
-        public void ReflectX()
-        {
-            _velocity.X = -_velocity.X;
-        }
-
-        public void ReflectY()
-        {
-            _velocity.Y = -_velocity.Y;
         }
 
         public void OnPaddleCollision(Paddle paddle)
@@ -72,26 +64,76 @@ namespace Arkanoid.Core
 
             // чуть “раздвигаем” шар, чтобы не залипал
             _position.Y = paddle.Bounds.Y - Size;
+
+            IncreaseSpeed();
         }
 
         public void OnWallCollision(int screenWidth, int screenHeight)
         {
             // отскок от стен
-
             // левая / правая
             if (_position.X <= 0 || _position.X + Size >= screenWidth) {
-                _velocity.X *= -1;
+                ReflectX();
             }
 
             // верх
             if (_position.Y <= 0) {
-                _velocity.Y *= -1;
+                ReflectY();
             }
 
             // низ (пока просто отскок)
             if (_position.Y + Size >= screenHeight) {
-                _velocity.Y *= -1;
+                ReflectY();
             }
+        }
+
+        public void OnBrickCollision(Brick brick)
+        {
+            var ballRect = this.Bounds;
+            var brickRect = brick.Bounds;
+
+            float overlapLeft = ballRect.Right - brickRect.Left;
+            float overlapRight = brickRect.Right - ballRect.Left;
+            float overlapTop = ballRect.Bottom - brickRect.Top;
+            float overlapBottom = brickRect.Bottom - ballRect.Top;
+
+            //overlapX → насколько “влезли” по горизонтали
+            //overlapY → по вертикали
+            float minOverlapX = Math.Min(overlapLeft, overlapRight);
+            float minOverlapY = Math.Min(overlapTop, overlapBottom);
+
+            if (minOverlapX < minOverlapY) {
+                // удар сбоку
+                this.ReflectX();
+            }
+            else {
+                // удар сверху/снизу
+                this.ReflectY();
+            }
+
+            IncreaseSpeed();
+        }
+
+        public void ReflectX()
+        {
+            _velocity.X = -_velocity.X;
+            NormalizeVelocity();
+        }
+
+        public void ReflectY()
+        {
+            _velocity.Y = -_velocity.Y;
+            NormalizeVelocity();
+        }
+        private void IncreaseSpeed()
+        {
+            _speed *= 1.03f;
+            _speed = MathF.Min(_speed, _maxSpeed);
+        }
+
+        private void NormalizeVelocity()
+        {
+            _velocity = Vector2.Normalize(_velocity) * _speed;
         }
     }
 }
