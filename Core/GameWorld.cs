@@ -32,7 +32,7 @@ namespace Arkanoid.Core
 
         public void Update(GameTime gameTime, int screenWidth, int screenHeight)
         {
-            _paddle.Update(gameTime);
+            _paddle.Update(gameTime, screenWidth);
             _ball.Update(gameTime, screenWidth, screenHeight, _paddle);
 
             CollisionSystem.HandleBallPaddle(_ball, _paddle);

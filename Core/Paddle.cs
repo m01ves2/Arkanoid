@@ -17,7 +17,7 @@ namespace Arkanoid.Core
             _position = startPosition;
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(GameTime gameTime, int screenWidth)
         {
             var keyboard = Keyboard.GetState();
 
@@ -26,6 +26,8 @@ namespace Arkanoid.Core
 
             if (keyboard.IsKeyDown(Keys.Right))
                 _position.X += Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            _position.X = MathHelper.Clamp(_position.X, 0, screenWidth - Width);
         }
 
         public void Draw(SpriteBatch spriteBatch, Texture2D pixel)

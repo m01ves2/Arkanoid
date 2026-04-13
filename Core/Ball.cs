@@ -1,13 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using System;
 
 namespace Arkanoid.Core
 {
     public class Ball
     {
+        private int _angle;
         private Vector2 _position;
         private Vector2 _velocity;
+        private const float _speed = 400f;
         private const int Size = 16;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
 
@@ -17,7 +20,8 @@ namespace Arkanoid.Core
             _position = startPosition;
 
             // стартовая скорость
-            _velocity = new Vector2(200f, -200f);
+            var direction = new Vector2(0, -1); //летим строго вверх
+            _velocity = Vector2.Normalize(direction)*_speed;
         }
 
         public void Update(GameTime gameTime, int screenWidth, int screenHeight, Paddle paddle)
@@ -31,9 +35,14 @@ namespace Arkanoid.Core
             var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
             spriteBatch.Draw(pixel, rect, Color.Yellow);
         }
-        public void OnBrickCollision()
+        public void ReflectX()
         {
-            _velocity.Y *= -1;
+            _velocity.X = -_velocity.X;
+        }
+
+        public void ReflectY()
+        {
+            _velocity.Y = -_velocity.Y;
         }
 
         public void OnPaddleCollision(Paddle paddle)
@@ -46,10 +55,19 @@ namespace Arkanoid.Core
             float offset = ballCenter - paddleCenter;
             float normalized = offset / (paddleRect.Width / 2f);
 
-            float maxAngleX = 300f;
+            //модель через X, Y
+            //normalized = Math.Clamp(normalized, -1f, 1f); //ограничения угла
+            //Vector2 direction = new Vector2(normalized, -0.75f);
+            //direction = Vector2.Normalize(direction);
+            //_velocity = direction * _speed;
 
-            _velocity.X = normalized * maxAngleX;
-            _velocity.Y = -MathF.Abs(_velocity.Y);
+            //через углы
+            float maxAngle = 75f;
+
+            float angle = normalized * maxAngle;
+            float rad = MathHelper.ToRadians(angle);
+            Vector2 direction = new Vector2( MathF.Sin(rad), -MathF.Cos(rad));
+            _velocity = direction * _speed;
 
 
             // чуть “раздвигаем” шар, чтобы не залипал
