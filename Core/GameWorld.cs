@@ -1,11 +1,20 @@
 ﻿using Arkanoid.Systems;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Arkanoid.Core
 {
+    public enum GameState
+    {
+        Playing,
+        GameOver
+    }
+
     public class GameWorld
     {
         public Paddle Paddle => _paddle;
@@ -18,6 +27,15 @@ namespace Arkanoid.Core
         const int BrickHeight = 20;
         const int OffsetX = 1;
         const int OffsetY = 40;
+
+        //screen shaking
+        private float _shakeTime;
+        private float _shakeStrength;
+
+        private GameState _state = GameState.Playing;
+        private int _score;
+
+        private SpriteFont _font;
 
         public GameWorld()
         {
@@ -33,6 +51,8 @@ namespace Arkanoid.Core
 
         public void Update(GameTime gameTime, int screenWidth, int screenHeight)
         {
+            CheckGameOver(screenHeight);
+
             _paddle.Update(gameTime, screenWidth);
             _ball.Update(gameTime, screenWidth, screenHeight, _paddle);
             
@@ -45,13 +65,28 @@ namespace Arkanoid.Core
                     _particles.RemoveAt(i);
             }
 
-            CollisionSystem.HandleBallPaddle(_ball, _paddle);
-
-            if (CollisionSystem.HandleBallBrick(_ball, _bricks)) {
+            if (CollisionSystem.HandleBallPaddle(_ball, _paddle)) {
+                //AddShake(0.5f);
                 SpawnParticles(_ball.Bounds.Location.ToVector2());
             }
 
-            CollisionSystem.HandleBallWall(_ball, screenWidth, screenHeight);
+            if (CollisionSystem.HandleBallBrick(this, _ball, _bricks)) {
+                AddShake(0.2f);
+                SpawnParticles(_ball.Bounds.Location.ToVector2());
+            }
+
+            if (CollisionSystem.HandleBallWall(_ball, screenWidth, screenHeight)) {
+                //AddShake(0.2f);
+            }
+
+            //screen shaking
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (_shakeTime > 0) {
+                _shakeTime -= dt;
+                if (_shakeTime <= 0)
+                    _shakeStrength = 0;
+            }
+
         }
         
 
@@ -66,6 +101,13 @@ namespace Arkanoid.Core
 
             foreach(var particle in _particles) {
                 particle.Draw(spriteBatch, pixel);
+            }
+
+
+            spriteBatch.DrawString(_font, $"Score: {_score}", new Vector2(10, 10), Color.White);
+
+            if (_state == GameState.GameOver) {
+                spriteBatch.DrawString(_font, "GAME OVER", new Vector2(300, 250), Color.Red);
             }
         }
 
@@ -90,5 +132,46 @@ namespace Arkanoid.Core
                 });
             }
         }
+
+        public void AddShake(float strength)
+        {
+            _shakeStrength = MathF.Max(_shakeStrength, strength);
+            _shakeTime = 0.2f;
+        }
+
+        public Vector2 GetShakeOffset()
+        {
+            if (_shakeTime <= 0)
+                return Vector2.Zero;
+
+            return new Vector2( Random.Shared.Next(-5, 6), Random.Shared.Next(-5, 6) ) * _shakeStrength;
+        }
+
+        public void AddScore(int value)
+        {
+            _score += value;
+        }
+
+        public void CheckGameOver(int screenHeight)
+        {
+            if (_ball.Position.Y > screenHeight) {
+                _state = GameState.GameOver;
+            }
+        }
+
+        public void Restart()
+        {
+            _state = GameState.Playing;
+            _score = 0;
+
+            _ball = new Ball(new Vector2(400, 300));
+        }
+
+        public void LoadContent(ContentManager content)
+        {
+            _font = content.Load<SpriteFont>("font");
+        }
     }
+
+
 }

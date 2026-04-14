@@ -7,12 +7,14 @@ namespace Arkanoid.Core
 {
     public class Ball
     {
+        private const int Size = 16;
         private int _angle;
         private Vector2 _position;
+        public Vector2 Position => _position;
         private Vector2 _velocity;
         private float _speed = 300f;
         private const float _maxSpeed = 800f;
-        private const int Size = 16;
+        private const float _acceleration = 8f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
 
 
@@ -29,6 +31,10 @@ namespace Arkanoid.Core
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _position += _velocity * dt;
+
+            //еще один вариант ускорения шарика (тут с течением времени)
+            //_speed = MathF.Min(_speed + _acceleration * dt, _maxSpeed);
+            //_velocity = Vector2.Normalize(_velocity) * _speed;
         }
 
         public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
@@ -37,7 +43,7 @@ namespace Arkanoid.Core
             spriteBatch.Draw(pixel, rect, Color.Yellow);
         }
 
-        public void OnPaddleCollision(Paddle paddle)
+        public void ResolvePaddleCollision(Paddle paddle)
         {
             var paddleRect = paddle.Bounds;
 
@@ -68,26 +74,31 @@ namespace Arkanoid.Core
             IncreaseSpeed();
         }
 
-        public void OnWallCollision(int screenWidth, int screenHeight)
+        public bool ResolveWallCollision(int screenWidth, int screenHeight)
         {
             // отскок от стен
             // левая / правая
             if (_position.X <= 0 || _position.X + Size >= screenWidth) {
                 ReflectX();
+                return true;
             }
 
             // верх
             if (_position.Y <= 0) {
                 ReflectY();
+                return true;
             }
 
             // низ (пока просто отскок)
-            if (_position.Y + Size >= screenHeight) {
-                ReflectY();
-            }
+            //if (_position.Y + Size >= screenHeight) {
+            //    ReflectY();
+            //    return true;
+            //}
+
+            return false;
         }
 
-        public void OnBrickCollision(Brick brick)
+        public void ResolveBrickCollision(Brick brick)
         {
             var ballRect = this.Bounds;
             var brickRect = brick.Bounds;

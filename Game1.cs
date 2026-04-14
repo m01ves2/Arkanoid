@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Arkanoid.Core;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -8,6 +9,7 @@ public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
+    private SpriteFont _font;
     
     ////fps counter
     //private int _frameCount;
@@ -33,6 +35,7 @@ public class Game1 : Game
     {
         // TODO: Add your initialization logic here
         _world = new Core.GameWorld();
+        _world.LoadContent(Content);
 
         base.Initialize();
     }
@@ -44,6 +47,7 @@ public class Game1 : Game
         // TODO: use this.Content to load your game content here
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { Color.White });
+        _font = Content.Load<SpriteFont>("font");
     }
 
     protected override void Update(GameTime gameTime)
@@ -75,7 +79,10 @@ public class Game1 : Game
         // TODO: Add your drawing code here
         //System.Diagnostics.Debug.WriteLine($"FPS: {_fps}");
 
-        _spriteBatch.Begin();
+        var shakeOffset = _world.GetShakeOffset();
+
+        _spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0)
+);
 
         _world.Draw(_spriteBatch, _whitePixel);
 

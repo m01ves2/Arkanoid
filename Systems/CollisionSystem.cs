@@ -7,26 +7,29 @@ namespace Arkanoid.Systems
 {
     public static class CollisionSystem
     {
-        public static void HandleBallPaddle(Ball ball, Paddle paddle)
+        public static bool HandleBallPaddle(Ball ball, Paddle paddle)
         {
             if (Intersects(ball.Bounds, paddle.Bounds)) {
-                ball.OnPaddleCollision(paddle);
+                ball.ResolvePaddleCollision(paddle);
+                return true;
             }
+            return false;
         }
-        public static bool HandleBallBrick(Ball ball, List<Brick> bricks)
+        public static bool HandleBallBrick(GameWorld gameWorld, Ball ball, List<Brick> bricks)
         {
             for (int i = 0; i < bricks.Count; i++) {
                 if (Intersects(ball.Bounds, bricks[i].Bounds)) {
-                    ball.OnBrickCollision(bricks[i]);
+                    ball.ResolveBrickCollision(bricks[i]);
                     bricks.RemoveAt(i);
+                    gameWorld.AddScore(10);
                     return true;
                 }
             }
             return false;
         }
-        public static void HandleBallWall(Ball ball, int screenWidth, int screenHeight)
+        public static bool HandleBallWall(Ball ball, int screenWidth, int screenHeight)
         {
-            ball.OnWallCollision(screenWidth, screenHeight);
+            return ball.ResolveWallCollision(screenWidth, screenHeight);
         }
 
         private static bool Intersects(Rectangle a, Rectangle b)
