@@ -10,7 +10,7 @@ namespace Arkanoid.Core
 
         private const int Width = 120;
         private const int Height = 20;
-        private const float Speed = 400f;
+        private const float Speed = 800f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
         public Paddle(Vector2 startPosition)
         {
@@ -30,11 +30,14 @@ namespace Arkanoid.Core
             _position.X = MathHelper.Clamp(_position.X, 0, screenWidth - Width);
         }
 
-        public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+        public void Draw(SpriteBatch spriteBatch, Texture2D texture)
         {
-            var rect = new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
+            //var rect = new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
 
-            spriteBatch.Draw(pixel, rect, Color.White);
+            //spriteBatch.Draw(pixel, rect, Color.White);
+            //spriteBatch.Draw(texture, _position, Color.White);
+            spriteBatch.Draw(texture, new Rectangle((int)_position.X, (int)_position.Y, Width, Height), Color.White);
         }
+
     }
 }

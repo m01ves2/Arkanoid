@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 
 namespace Arkanoid;
 
@@ -10,14 +11,17 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SpriteFont _font;
-    
+    private Song _music;
+    private int _screenWidth = 800;
+    private int screenHeight = 600;
+
     ////fps counter
     //private int _frameCount;
     //private double _elapsedTime;
     //private int _fps;
 
     private Texture2D _whitePixel;
-    private Core.GameWorld _world;
+    private Core.GameWorld _gameWorld;
 
     public Game1()
     {
@@ -25,17 +29,23 @@ public class Game1 : Game
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
 
-        _graphics.PreferredBackBufferWidth = 800;
-        _graphics.PreferredBackBufferHeight = 600;
+        _graphics.PreferredBackBufferWidth = _screenWidth;
+        _graphics.PreferredBackBufferHeight = screenHeight;
 
         _graphics.ApplyChanges();
+
+        _music = Content.Load<Song>("background_music");
+
+        MediaPlayer.IsRepeating = true;
+        MediaPlayer.Volume = 0.1f;
+        MediaPlayer.Play(_music);
     }
 
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-        _world = new Core.GameWorld();
-        _world.LoadContent(Content);
+        _gameWorld = new Core.GameWorld(_screenWidth, screenHeight);
+        _gameWorld.LoadContent(Content);
 
         base.Initialize();
     }
@@ -48,12 +58,15 @@ public class Game1 : Game
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { Color.White });
         _font = Content.Load<SpriteFont>("font");
+
     }
 
     protected override void Update(GameTime gameTime)
     {
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
+
+        _gameWorld.HandleInput(Keyboard.GetState());
 
         // TODO: Add your update logic here
         //_frameCount++;
@@ -66,7 +79,7 @@ public class Game1 : Game
         //    _elapsedTime = 0;
         //}
 
-        _world.Update( gameTime, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height );
+        _gameWorld.Update( gameTime, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height );
 
         base.Update(gameTime);
         
@@ -79,12 +92,12 @@ public class Game1 : Game
         // TODO: Add your drawing code here
         //System.Diagnostics.Debug.WriteLine($"FPS: {_fps}");
 
-        var shakeOffset = _world.GetShakeOffset();
+        var shakeOffset = _gameWorld.GetShakeOffset();
 
         _spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0)
 );
 
-        _world.Draw(_spriteBatch, _whitePixel);
+        _gameWorld.Draw(_spriteBatch, _whitePixel, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
 
         _spriteBatch.End();
 

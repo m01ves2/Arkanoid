@@ -20,8 +20,11 @@ namespace Arkanoid.Systems
             for (int i = 0; i < bricks.Count; i++) {
                 if (Intersects(ball.Bounds, bricks[i].Bounds)) {
                     ball.ResolveBrickCollision(bricks[i]);
-                    bricks.RemoveAt(i);
-                    gameWorld.AddScore(10);
+                    bricks[i].LoseHp();
+                    if (bricks[i]._brickType != BrickType.Unbreakable)
+                        gameWorld.AddScore(10);
+                    if (bricks[i].Hp == 0)
+                        bricks.RemoveAt(i);
                     return true;
                 }
             }

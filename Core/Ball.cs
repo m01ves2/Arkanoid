@@ -16,6 +16,7 @@ namespace Arkanoid.Core
         private const float _maxSpeed = 800f;
         private const float _acceleration = 8f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
+        private Vector2 _previousPosition;
 
 
         public Ball(Vector2 startPosition)
@@ -29,6 +30,8 @@ namespace Arkanoid.Core
 
         public void Update(GameTime gameTime, int screenWidth, int screenHeight, Paddle paddle)
         {
+            _previousPosition = _position;
+            
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _position += _velocity * dt;
 
@@ -37,14 +40,21 @@ namespace Arkanoid.Core
             //_velocity = Vector2.Normalize(_velocity) * _speed;
         }
 
-        public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+        //public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
+        //{
+        //    var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
+        //    spriteBatch.Draw(pixel, rect, Color.Yellow);
+        //}
+        public void Draw(SpriteBatch spriteBatch, Texture2D texture)
         {
-            var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
-            spriteBatch.Draw(pixel, rect, Color.Yellow);
+            //spriteBatch.Draw(texture, _position, Color.White);
+            spriteBatch.Draw(texture, new Rectangle((int)_position.X, (int)_position.Y, Size, Size), Color.White);
         }
 
         public void ResolvePaddleCollision(Paddle paddle)
         {
+            _position = _previousPosition;
+
             var paddleRect = paddle.Bounds;
 
             float paddleCenter = paddleRect.X + paddleRect.Width / 2f;
@@ -76,15 +86,20 @@ namespace Arkanoid.Core
 
         public bool ResolveWallCollision(int screenWidth, int screenHeight)
         {
+            //_position = _previousPosition;
+
             // отскок от стен
             // левая / правая
             if (_position.X <= 0 || _position.X + Size >= screenWidth) {
+                _position = _previousPosition;
                 ReflectX();
                 return true;
             }
 
             // верх
-            if (_position.Y <= 0) {
+            if (_position.Y < 0) {
+                _position = _previousPosition;
+                _position.Y = 0;
                 ReflectY();
                 return true;
             }
@@ -100,6 +115,8 @@ namespace Arkanoid.Core
 
         public void ResolveBrickCollision(Brick brick)
         {
+            _position = _previousPosition;
+
             var ballRect = this.Bounds;
             var brickRect = brick.Bounds;
 
@@ -115,11 +132,11 @@ namespace Arkanoid.Core
 
             if (minOverlapX < minOverlapY) {
                 // удар сбоку
-                this.ReflectX();
+                ReflectX();
             }
             else {
                 // удар сверху/снизу
-                this.ReflectY();
+                ReflectY();
             }
 
             IncreaseSpeed();
@@ -134,6 +151,11 @@ namespace Arkanoid.Core
         public void ReflectY()
         {
             _velocity.Y = -_velocity.Y;
+
+            if (MathF.Abs(_velocity.Y) < 0.2f) {
+                _velocity.Y = MathF.Sign(_velocity.Y) * 0.2f;
+            }
+
             NormalizeVelocity();
         }
         private void IncreaseSpeed()

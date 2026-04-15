@@ -22,7 +22,7 @@ namespace Arkanoid.Core
         {
             float alpha = Life / MaxLife;
 
-            spriteBatch.Draw( pixel, new Rectangle((int)Position.X, (int)Position.Y, 2, 2),  Color.White * alpha );
+            spriteBatch.Draw( pixel, new Rectangle((int)Position.X, (int)Position.Y, 2, 2), Color.Yellow * alpha );
         }
     }
 }
