@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Arkanoid.Systems;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 using System;
@@ -7,7 +8,7 @@ namespace Arkanoid.Core
 {
     public class Ball
     {
-        private const int Size = 16;
+        public const int Size = 16;
         private int _angle;
         private Vector2 _position;
         public Vector2 Position => _position;
@@ -28,7 +29,7 @@ namespace Arkanoid.Core
             _velocity = Vector2.Normalize(direction)*_speed;
         }
 
-        public void Update(GameTime gameTime, int screenWidth, int screenHeight, Paddle paddle)
+        public void Update(GameTime gameTime)
         {
             _previousPosition = _position;
             
@@ -84,33 +85,23 @@ namespace Arkanoid.Core
             IncreaseSpeed();
         }
 
-        public bool ResolveWallCollision(int screenWidth, int screenHeight)
+        public void ResolveWallCollision(WallHitType wallHitType)
         {
-            //_position = _previousPosition;
+            //return false;
+            switch (wallHitType) {
+                //отскок от стен
+                case WallHitType.Left: //левая
+                case WallHitType.Right: //правая
+                    _position = _previousPosition;
+                    ReflectX();
+                    break;
 
-            // отскок от стен
-            // левая / правая
-            if (_position.X <= 0 || _position.X + Size >= screenWidth) {
-                _position = _previousPosition;
-                ReflectX();
-                return true;
+                case WallHitType.Top:
+                    _position = _previousPosition;
+                    _position.Y = 0;
+                    ReflectY();
+                    break;
             }
-
-            // верх
-            if (_position.Y < 0) {
-                _position = _previousPosition;
-                _position.Y = 0;
-                ReflectY();
-                return true;
-            }
-
-            // низ (пока просто отскок)
-            //if (_position.Y + Size >= screenHeight) {
-            //    ReflectY();
-            //    return true;
-            //}
-
-            return false;
         }
 
         public void ResolveBrickCollision(Brick brick)
@@ -145,6 +136,7 @@ namespace Arkanoid.Core
         public void ReflectX()
         {
             _velocity.X = -_velocity.X;
+
             NormalizeVelocity();
         }
 

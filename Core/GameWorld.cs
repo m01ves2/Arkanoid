@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 
 namespace Arkanoid.Core
 {
@@ -54,19 +53,26 @@ namespace Arkanoid.Core
         private SoundEffect _loseSound;
         //private Song _music;
 
+        private int _screenWidth;
+        private int _screenHeight;
+
         public GameWorld(int screenWidth, int screenHeight) //todo screenWidth, screenHeight
         {
+            _screenWidth = screenWidth;
+            _screenHeight = screenHeight;
+
             _paddle = new Paddle(new Vector2(400, 500));
             var ball = new Ball(new Vector2(400, 300));
             _balls.Add(ball);
+
             //for (int y = 0; y < 5; y++) {
             //    for(int x = 0; x < 10; x++) {
             //        _bricks.Add(new Brick(new Vector2(x * 80 + 1, y * 20 + 40)));
             //    }
             //}
-            var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level.txt");
-            char[,] brickChars = LevelLoader.Load(path);
-            MakeBricks(brickChars, screenWidth, screenHeight);
+            //var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level.txt");
+            //char[,] brickChars = LevelLoader.Load(path);
+            //MakeBricks(brickChars, screenWidth, screenHeight);
 
         }
 
@@ -118,69 +124,111 @@ namespace Arkanoid.Core
             _background = content.Load<Texture2D>("background");
         }
 
-        public void Update(GameTime gameTime, int screenWidth, int screenHeight)
+        public void Update(GameTime gameTime)
         {
             if (_state != GameState.Playing)
                 return;
+            CheckGameOver();
 
+            UpdateSimulation(gameTime);
 
-            CheckGameOver(screenWidth, screenHeight);
+            HandleCollisions();
 
-            _paddle.Update(gameTime, screenWidth);
-            
-            foreach(var ball in _balls)
-                ball.Update(gameTime, screenWidth, screenHeight, _paddle);
-            
-            for (int i = _particles.Count - 1; i >= 0; i--) {
-                var p = _particles[i];
+            UpdateGameState();
 
-                _particles[i].Update(gameTime);
-
-                if (p.Life <= 0)
-                    _particles.RemoveAt(i);
-            }
-
-            for(int i = 0; i < _balls.Count; i++) {
-                var ball = _balls[i];
-                if (CollisionSystem.HandleBallPaddle(ball, _paddle)) {
-                    //AddShake(0.5f);
-                    float randomPitch = Random.Shared.NextSingle() * 0.2f - 0.1f;
-                    _hitSound.Play(volume: 0.2f, pitch: randomPitch, pan: 0f);
-                    SpawnParticles(ball.Bounds.Location.ToVector2());
-                }
-
-                if (CollisionSystem.HandleBallBrick(this, ball, _bricks)) {
-                    AddShake(0.2f);
-                    float randomPitch = Random.Shared.NextSingle() * 0.2f - 0.1f;
-                    _brickSound.Play(volume: 0.2f, pitch: randomPitch, pan: 0f);
-                    SpawnParticles(ball.Bounds.Location.ToVector2());
-
-                    CheckWin();
-
-                    if (Random.Shared.NextDouble() < 0.1) {
-                        SpawnExtraBall();
-                    }
-                }
-
-
-                if (CollisionSystem.HandleBallWall(ball, screenWidth, screenHeight)) {
-                    //AddShake(0.2f);
-                }
-            }
-
-            //screen shaking
-            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (_shakeTime > 0) {
-                _shakeTime -= dt;
-                if (_shakeTime <= 0)
-                    _shakeStrength = 0;
-            }
-
+            UpdateEffects(gameTime);
         }
 
+        public void UpdateSimulation(GameTime gameTime)
+        {
+
+            _paddle.Update(gameTime, _screenWidth);
+
+            foreach (var ball in _balls)
+                ball.Update(gameTime);
+
+            UpdateParticles(gameTime);
+        }
+        private void UpdateParticles(GameTime gameTime)
+        {
+            for (int i = _particles.Count - 1; i >= 0; i--) {
+                _particles[i].Update(gameTime);
+
+                if (_particles[i].Life <= 0)
+                    _particles.RemoveAt(i);
+            }
+        }
+        private void HandleCollisions()
+        {
+            var collisions = new List<ICollision>();
+            collisions.AddRange(CollisionSystem.DetectBallBrickCollision(_balls, _bricks));
+            collisions.AddRange(CollisionSystem.DetectBallPaddleCollision(_balls, _paddle));
+            collisions.AddRange(CollisionSystem.DetectBallWallCollision(_balls, _screenWidth, _screenHeight));
+
+            foreach (var c in collisions)
+                c.Resolve(this);
+        }
+        private void UpdateGameState()
+        {
+            CheckGameOver();
+            CheckWin();
+        }
+        private void UpdateEffects(GameTime gameTime)
+        {
+            UpdateShake(gameTime);
+        }
+        private void UpdateShake(GameTime gameTime)
+        {
+            if (_shakeTime <= 0)
+                return;
+
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            _shakeTime -= dt;
+
+            if (_shakeTime <= 0)
+                _shakeStrength = 0;
+        }
+
+
+        public void HandleBrickHit(Ball ball, Brick brick)
+        {
+            AddShake(0.2f);
+
+            float randomPitch = Random.Shared.NextSingle() * 0.2f - 0.1f;
+            _brickSound.Play(volume: 0.2f, pitch: randomPitch, pan: 0f);
+
+            ball.ResolveBrickCollision(brick);
+
+            brick.LoseHp();
+
+            if (brick.Hp == 0)
+                _bricks.Remove(brick);
+
+            if (brick._brickType != BrickType.Unbreakable)
+                AddScore(10);
+
+            SpawnParticles(ball.Bounds.Location.ToVector2());
+
+            if (Random.Shared.NextDouble() < 0.1)
+                SpawnExtraBall();
+        }
+        public void HandlePaddleHit(Ball ball, Paddle paddle)
+        {
+            float randomPitch = Random.Shared.NextSingle() * 0.2f - 0.1f;
+            _hitSound.Play(volume: 0.2f, pitch: randomPitch, pan: 0f);
+
+            ball.ResolvePaddleCollision(paddle);
+            SpawnParticles(ball.Bounds.Location.ToVector2());
+        }
+        public void HandleWallHit(Ball ball, WallHitType wallHitType)
+        {
+            // обычно без эффектов или минимально
+            ball.ResolveWallCollision(wallHitType);
+        }
         private void SpawnExtraBall()
         {
-            var ball = new Ball(new Vector2(400, 300));
+            var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
             _balls.Add(ball);
         }
 
@@ -278,18 +326,18 @@ namespace Arkanoid.Core
             _score += value;
         }
 
-        public void CheckGameOver(int screenWidth, int screenHeight)
+        public void CheckGameOver()
         {
             if (_state == GameState.GameOver) return;
 
             for (int i = _balls.Count - 1; i >= 0; i--) { 
-                if (_balls[i].Position.Y > screenHeight) {
+                if (_balls[i].Position.Y > _screenHeight) {
                     _balls.RemoveAt(i);
                 }
             }
 
-            if (_balls.Count() == 0) {
-               LoseLife(screenWidth, screenHeight);
+            if (_balls.Count == 0) {
+               LoseLife();
             } 
         }
 
@@ -302,7 +350,7 @@ namespace Arkanoid.Core
             _state = GameState.Win;
         }
 
-        private void LoseLife(int screenWidth, int screenHeight)
+        private void LoseLife()
         {
             _loseSound.Play();
             AddShake(0.3f);
@@ -314,28 +362,15 @@ namespace Arkanoid.Core
                 return;
             }
 
-            ResetBall(screenWidth, screenHeight);
+            ResetBall();
         }
 
-        private void ResetBall(int screenWidth, int screenHeight)
+        private void ResetBall()
         {
-            var ball = new Ball(new Vector2(screenWidth / 2f, screenHeight / 2f));
+            var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
             _balls.Clear();
             _balls.Add(ball);
         }
-
-        //public void Restart()
-        //{
-        //    _state = GameState.Playing;
-        //    _score = 0;
-
-        //    _ball = new Ball(new Vector2(400, 300));
-        //}
-
-        //public void LoadContent(ContentManager content)
-        //{
-        //    _font = content.Load<SpriteFont>("font");
-        //}
 
         public void HandleInput(KeyboardState keyboard)
         {
@@ -362,7 +397,11 @@ namespace Arkanoid.Core
             _lives = 3;
             _state = GameState.Playing;
 
-            ResetBall(800, 600); // временно, потом уберём хардкод
+            var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level.txt");
+            char[,] brickChars = LevelLoader.Load(path);
+            MakeBricks(brickChars, _screenWidth, _screenHeight);
+
+            ResetBall(); // временно, потом уберём хардкод
         }
 
         public void Restart()
@@ -373,11 +412,9 @@ namespace Arkanoid.Core
         private void DrawCentered(SpriteBatch spriteBatch, string text, float y, Color color)
         {
             var size = _font.MeasureString(text);
-            float x = 800 / 2f - size.X / 2f;
+            float x = _screenWidth / 2f - size.X / 2f;
 
             spriteBatch.DrawString(_font, text, new Vector2(x, y), color);
         }
     }
-
-
 }

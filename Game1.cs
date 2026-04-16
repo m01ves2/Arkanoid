@@ -79,7 +79,7 @@ public class Game1 : Game
         //    _elapsedTime = 0;
         //}
 
-        _gameWorld.Update( gameTime, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height );
+        _gameWorld.Update(gameTime);
 
         base.Update(gameTime);
         
