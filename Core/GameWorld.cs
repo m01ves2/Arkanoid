@@ -25,7 +25,8 @@ namespace Arkanoid.Core
         private Paddle _paddle;
         private List<Ball> _balls = new List<Ball>();
         private List<Brick> _bricks = new List<Brick>();
-        private List<Particle> _particles = new();
+        private List<Particle> _particles = new List<Particle>();
+        private List<Bonus> _bonuses = new List<Bonus>();
 
         //const int BrickWidth = 78;
         //const int BrickHeight = 18;
@@ -47,6 +48,7 @@ namespace Arkanoid.Core
         private Texture2D _paddleTexture;
         private Texture2D _brickTexture;
         private Texture2D _background;
+        private Texture2D _bonusTexture;
 
         private SoundEffect _hitSound;
         private SoundEffect _brickSound;
@@ -61,19 +63,11 @@ namespace Arkanoid.Core
             _screenWidth = screenWidth;
             _screenHeight = screenHeight;
 
-            _paddle = new Paddle(new Vector2(400, 500));
-            var ball = new Ball(new Vector2(400, 300));
-            _balls.Add(ball);
-
-            //for (int y = 0; y < 5; y++) {
-            //    for(int x = 0; x < 10; x++) {
-            //        _bricks.Add(new Brick(new Vector2(x * 80 + 1, y * 20 + 40)));
-            //    }
-            //}
-            //var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level.txt");
-            //char[,] brickChars = LevelLoader.Load(path);
-            //MakeBricks(brickChars, screenWidth, screenHeight);
-
+            //_paddle = new Paddle(new Vector2(400, 500));
+            _paddle = new Paddle(new Vector2(_screenWidth / 2 - Paddle.Width / 2, _screenHeight - 50));
+            //var ball = new Ball(new Vector2(400, 300));
+            //var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
+            //_balls.Add(ball);
         }
 
         public void MakeBricks(char[,] brickChars, int screenWidth, int screenHeight)
@@ -86,9 +80,9 @@ namespace Arkanoid.Core
             var maxWidth = Math.Min(bricksInScreenWidth, brickChars.GetLength(1));
 
             for (int row = 0; row < maxHeight; row++) {
-                for(int col = 0; col < maxWidth; col++) {
-                    var brickType = GetBrickBySymbol(brickChars[row, col]);
-                    if(brickType == BrickType.None) continue;
+                for (int col = 0; col < maxWidth; col++) {
+                    var brickType = GetBrickTypeBySymbol(brickChars[row, col]);
+                    if (brickType == BrickType.None) continue;
 
                     var x = col * (Brick.Width + Spacing) + OffsetX;
                     var y = row * (Brick.Height + Spacing) + OffsetY;
@@ -99,7 +93,7 @@ namespace Arkanoid.Core
             }
         }
 
-        private static BrickType GetBrickBySymbol(char c) => c switch
+        private static BrickType GetBrickTypeBySymbol(char c) => c switch
         {
             '#' => BrickType.Unbreakable,
             '1' => BrickType.Fragile,
@@ -107,7 +101,7 @@ namespace Arkanoid.Core
             '3' => BrickType.Strong,
             ' ' => BrickType.None,
             '.' => BrickType.None,
-             _  => BrickType.None
+            _ => BrickType.None
         };
 
         public void LoadContent(ContentManager content)
@@ -117,6 +111,7 @@ namespace Arkanoid.Core
             _ballTexture = content.Load<Texture2D>("ball");
             _paddleTexture = content.Load<Texture2D>("paddle");
             _brickTexture = content.Load<Texture2D>("brick");
+            _bonusTexture = content.Load<Texture2D>("bonus");
 
             _hitSound = content.Load<SoundEffect>("hitSound");
             _brickSound = content.Load<SoundEffect>("brickSound");
@@ -144,8 +139,18 @@ namespace Arkanoid.Core
 
             _paddle.Update(gameTime, _screenWidth);
 
-            foreach (var ball in _balls)
+            foreach (var ball in _balls) {
                 ball.Update(gameTime);
+            }
+
+            for (int i = 0; i < _bonuses.Count; i++) {
+                var bonus = _bonuses[i];
+                bonus.Update(gameTime);
+
+                if (bonus.Bounds.Y > _screenHeight) {
+                    _bonuses.Remove(bonus);
+                }
+            }
 
             UpdateParticles(gameTime);
         }
@@ -164,6 +169,7 @@ namespace Arkanoid.Core
             collisions.AddRange(CollisionSystem.DetectBallBrickCollision(_balls, _bricks));
             collisions.AddRange(CollisionSystem.DetectBallPaddleCollision(_balls, _paddle));
             collisions.AddRange(CollisionSystem.DetectBallWallCollision(_balls, _screenWidth, _screenHeight));
+            collisions.AddRange(CollisionSystem.DetectPaddleBonusCollision(_paddle, _bonuses));
 
             foreach (var c in collisions)
                 c.Resolve(this);
@@ -210,8 +216,10 @@ namespace Arkanoid.Core
 
             SpawnParticles(ball.Bounds.Location.ToVector2());
 
-            if (Random.Shared.NextDouble() < 0.1)
-                SpawnExtraBall();
+            if (Random.Shared.NextDouble() < 0.1) {
+                //SpawnExtraBall();
+                SpawnBonus(new Vector2(brick.Bounds.Left + brick.Bounds.Width / 2, brick.Bounds.Bottom));
+            }
         }
         public void HandlePaddleHit(Ball ball, Paddle paddle)
         {
@@ -226,10 +234,89 @@ namespace Arkanoid.Core
             // обычно без эффектов или минимально
             ball.ResolveWallCollision(wallHitType);
         }
-        private void SpawnExtraBall()
+
+        public void HandleBonusPickup(Paddle paddle, Bonus bonus)
         {
-            var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
+            AddShake(0.2f);
+
+            float randomPitch = Random.Shared.NextSingle() * 0.2f - 0.1f;
+            _brickSound.Play(volume: 0.2f, pitch: randomPitch, pan: 0f);
+
+            _bonuses.Remove(bonus);
+
+            //if (Random.Shared.NextDouble() < 0.1)
+            //    SpawnExtraBall();
+            switch (bonus.BonusType) {
+                case BonusType.ExpandPaddle:
+                    ExpandPaddle();
+                    break;
+                case BonusType.ShrinkPaddle:
+                    ShrinkPaddle();
+                    break;
+                case BonusType.SlowBall:
+                    SlowBall();
+                    break;
+                case BonusType.PiercingBall:
+                    PiercingBall();
+                    break;
+                case BonusType.MultiBall:
+                    MultiBall();
+                    break;
+            }
+        }
+
+        private void SpawnBonus(Vector2 position)
+        {
+            int i = Random.Shared.Next() % Enum.GetValues<BonusType>().Length;
+
+            var bonusPosition = new Vector2(position.X - Bonus.Width / 2, position.Y);
+            Bonus bonus;
+
+            switch (i) {
+                case 0:
+                    bonus = new Bonus(bonusPosition, BonusType.ExpandPaddle);
+                    break;
+                case 1:
+                    bonus = new Bonus(bonusPosition, BonusType.ShrinkPaddle);
+                    break;
+                case 2:
+                    bonus = new Bonus(bonusPosition, BonusType.SlowBall);
+                    break;
+                case 3:
+                    bonus = new Bonus(bonusPosition, BonusType.PiercingBall);
+                    break;
+                default:
+                    bonus = new Bonus(bonusPosition, BonusType.MultiBall);
+                    break;
+            }
+
+            _bonuses.Add(bonus);
+        }
+
+        private void MultiBall()
+        {
+            var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
             _balls.Add(ball);
+        }
+
+        private void ExpandPaddle()
+        {
+            //TODO
+        }
+
+        private void ShrinkPaddle()
+        {
+            //TODO
+        }
+
+        private void SlowBall()
+        {
+            //TODO
+        }
+
+        private void PiercingBall()
+        {
+            //TODO
         }
 
         public void Draw(SpriteBatch spriteBatch, Texture2D pixel, int screenWidth, int screenHeight)
@@ -267,11 +354,15 @@ namespace Arkanoid.Core
                 brick.Draw(spriteBatch, _brickTexture);
             }
 
-            foreach(var particle in _particles) {
+            foreach(var bonus in _bonuses) {
+                bonus.Draw(spriteBatch, _bonusTexture);
+            }
+
+            foreach (var particle in _particles) {
                 particle.Draw(spriteBatch, pixel);
             }
 
-             
+
             //if (_state == GameState.GameOver) {
             //    spriteBatch.DrawString(_font, "GAME OVER", new Vector2(300, 250), Color.Red);
             //}
@@ -291,13 +382,10 @@ namespace Arkanoid.Core
                     MathF.Sin(angle)
                 ) * speed;
 
-                _particles.Add(new Particle
-                {
-                    Position = position,
-                    Velocity = velocity,
-                    Life = 0.5f,
-                    MaxLife = 0.5f
-                });
+                var life = 0.5f;
+                var maxLife = 0.5f;
+
+                _particles.Add(new Particle(position, velocity, life, maxLife));
             }
         }
 
@@ -318,7 +406,7 @@ namespace Arkanoid.Core
             if (_shakeTime <= 0)
                 return Vector2.Zero;
 
-            return new Vector2( Random.Shared.Next(-5, 6), Random.Shared.Next(-5, 6) ) * _shakeStrength;
+            return new Vector2(Random.Shared.Next(-5, 6), Random.Shared.Next(-5, 6)) * _shakeStrength;
         }
 
         public void AddScore(int value)
@@ -330,15 +418,15 @@ namespace Arkanoid.Core
         {
             if (_state == GameState.GameOver) return;
 
-            for (int i = _balls.Count - 1; i >= 0; i--) { 
-                if (_balls[i].Position.Y > _screenHeight) {
+            for (int i = _balls.Count - 1; i >= 0; i--) {
+                if (_balls[i].Bounds.Y > _screenHeight) {
                     _balls.RemoveAt(i);
                 }
             }
 
             if (_balls.Count == 0) {
-               LoseLife();
-            } 
+                LoseLife();
+            }
         }
 
         public void CheckWin()
@@ -363,13 +451,20 @@ namespace Arkanoid.Core
             }
 
             ResetBall();
+            ResetBonuses();
         }
 
         private void ResetBall()
         {
-            var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
+            var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
+            //var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
             _balls.Clear();
             _balls.Add(ball);
+        }
+
+        private void ResetBonuses()
+        {
+            _bonuses.Clear();
         }
 
         public void HandleInput(KeyboardState keyboard)

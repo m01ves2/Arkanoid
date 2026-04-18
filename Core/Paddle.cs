@@ -8,8 +8,8 @@ namespace Arkanoid.Core
     {
         private Vector2 _position;
 
-        private const int Width = 120;
-        private const int Height = 20;
+        public const int Width = 120;
+        public const int Height = 20;
         private const float Speed = 800f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
         public Paddle(Vector2 startPosition)

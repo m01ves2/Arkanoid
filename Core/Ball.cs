@@ -11,7 +11,7 @@ namespace Arkanoid.Core
         public const int Size = 16;
         private int _angle;
         private Vector2 _position;
-        public Vector2 Position => _position;
+        //public Vector2 Position => _position;
         private Vector2 _velocity;
         private float _speed = 300f;
         private const float _maxSpeed = 800f;

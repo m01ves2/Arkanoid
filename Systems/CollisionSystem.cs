@@ -12,17 +12,17 @@ namespace Arkanoid.Systems
             foreach (var ball in balls) {
                 // отскок от стен
                 // левая
-                if (ball.Position.X <= 0) {
+                if (ball.Bounds.X <= 0) {
                     result.Add(new BallWallCollision(ball, WallHitType.Left));
                 }
 
                 //правая
-                if (ball.Position.X + Ball.Size >= screenWidth) {
+                if (ball.Bounds.X + Ball.Size >= screenWidth) {
                     result.Add(new BallWallCollision(ball, WallHitType.Right));
                 }
 
                 // верх
-                if (ball.Position.Y < 0) {
+                if (ball.Bounds.Y < 0) {
                     result.Add(new BallWallCollision(ball, WallHitType.Top));
                 }
             }
@@ -53,6 +53,19 @@ namespace Arkanoid.Systems
                 if (Intersects(ball.Bounds, paddle.Bounds)) {
                     result.Add(new BallPaddleCollision(ball, paddle));
                 }
+            }
+            return result;
+        }
+
+        public static List<PaddleBonusCollision> DetectPaddleBonusCollision(Paddle paddle, List<Bonus> bonuses)
+        {
+            var result = new List<PaddleBonusCollision>();
+
+            foreach (var bonus in bonuses) {
+                if (Intersects(paddle.Bounds, bonus.Bounds)) {
+                    result.Add(new PaddleBonusCollision(paddle, bonus));
+                }
+
             }
             return result;
         }
