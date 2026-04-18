@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
 
 namespace Arkanoid.Core
 {
@@ -64,7 +65,7 @@ namespace Arkanoid.Core
             _screenHeight = screenHeight;
 
             //_paddle = new Paddle(new Vector2(400, 500));
-            _paddle = new Paddle(new Vector2(_screenWidth / 2 - Paddle.Width / 2, _screenHeight - 50));
+            _paddle = new Paddle(new Vector2(_screenWidth / 2 - 120 / 2, _screenHeight - 50));
             //var ball = new Ball(new Vector2(400, 300));
             //var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
             //_balls.Add(ball);
@@ -206,8 +207,13 @@ namespace Arkanoid.Core
 
             ball.ResolveBrickCollision(brick);
 
-            brick.LoseHp();
-
+            if (ball.IsPiercing) {
+                brick.Destroy();
+            }
+            else {
+                brick.LoseHp();
+            }
+            
             if (brick.Hp == 0)
                 _bricks.Remove(brick);
 
@@ -216,10 +222,10 @@ namespace Arkanoid.Core
 
             SpawnParticles(ball.Bounds.Location.ToVector2());
 
-            if (Random.Shared.NextDouble() < 0.1) {
+           // if (Random.Shared.NextDouble() < 0.1) {
                 //SpawnExtraBall();
                 SpawnBonus(new Vector2(brick.Bounds.Left + brick.Bounds.Width / 2, brick.Bounds.Bottom));
-            }
+           // }
         }
         public void HandlePaddleHit(Ball ball, Paddle paddle)
         {
@@ -301,22 +307,25 @@ namespace Arkanoid.Core
 
         private void ExpandPaddle()
         {
-            //TODO
+            _paddle.Expand(30);
         }
 
         private void ShrinkPaddle()
         {
-            //TODO
+            _paddle.Expand(-30);
         }
 
         private void SlowBall()
         {
-            //TODO
+            foreach(var ball in _balls) {
+                ball.ResetSpeed();
+            }
         }
 
         private void PiercingBall()
         {
-            //TODO
+            foreach (var ball in _balls)
+                ball.SetPiercing(true);
         }
 
         public void Draw(SpriteBatch spriteBatch, Texture2D pixel, int screenWidth, int screenHeight)
@@ -452,6 +461,7 @@ namespace Arkanoid.Core
 
             ResetBall();
             ResetBonuses();
+            _paddle.ResetWidth();
         }
 
         private void ResetBall()

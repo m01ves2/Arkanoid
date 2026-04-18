@@ -8,7 +8,12 @@ namespace Arkanoid.Core
     {
         private Vector2 _position;
 
-        public const int Width = 120;
+        private const int BaseWidth = 120;
+        private const int minWidth = 30;
+        private const int maxWidth = 240;
+        private int _widthModifier = 0;
+        public int Width => BaseWidth + _widthModifier;
+
         public const int Height = 20;
         private const float Speed = 800f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
@@ -39,5 +44,14 @@ namespace Arkanoid.Core
             spriteBatch.Draw(texture, new Rectangle((int)_position.X, (int)_position.Y, Width, Height), Color.White);
         }
 
+        public void Expand(int value)
+        {
+            _widthModifier = MathHelper.Clamp(_widthModifier + value, minWidth, maxWidth);
+        }
+
+        public void ResetWidth()
+        {
+            _widthModifier = 0;
+        }
     }
 }

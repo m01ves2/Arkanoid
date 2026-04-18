@@ -62,5 +62,11 @@ namespace Arkanoid.Core
             if (_brickType != BrickType.Unbreakable && _hp > 0)
                 _hp--;
         }
+
+        public void Destroy()
+        {
+            if (_brickType != BrickType.Unbreakable && _hp > 0)
+                _hp = 0;
+        }
     }
 }

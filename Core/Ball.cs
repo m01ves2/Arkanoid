@@ -14,11 +14,14 @@ namespace Arkanoid.Core
         //public Vector2 Position => _position;
         private Vector2 _velocity;
         private float _speed = 300f;
+        private float _baseSpeed = 300f;
         private const float _maxSpeed = 800f;
         private const float _acceleration = 8f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
         private Vector2 _previousPosition;
 
+        private bool _isPiercing = false;
+        public bool IsPiercing => _isPiercing;
 
         public Ball(Vector2 startPosition)
         {
@@ -106,6 +109,8 @@ namespace Arkanoid.Core
 
         public void ResolveBrickCollision(Brick brick)
         {
+            if (_isPiercing) return;
+
             _position = _previousPosition;
 
             var ballRect = this.Bounds;
@@ -150,10 +155,27 @@ namespace Arkanoid.Core
 
             NormalizeVelocity();
         }
-        private void IncreaseSpeed()
+        public void IncreaseSpeed()
         {
             _speed *= 1.03f;
             _speed = MathF.Min(_speed, _maxSpeed);
+        }
+
+        public void SetPiercing(bool value)
+        {
+            _isPiercing = value;
+
+            if (_isPiercing) {
+                _speed = _maxSpeed;
+            }
+            else {
+                _speed = _baseSpeed;
+            }
+        }
+
+        public void ResetSpeed()
+        {
+            _speed = _baseSpeed;
         }
 
         private void NormalizeVelocity()
