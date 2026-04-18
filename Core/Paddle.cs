@@ -46,7 +46,7 @@ namespace Arkanoid.Core
 
         public void Expand(int value)
         {
-            _widthModifier = MathHelper.Clamp(_widthModifier + value, minWidth, maxWidth);
+            _widthModifier = MathHelper.Clamp(_widthModifier + value, minWidth - BaseWidth, maxWidth - BaseWidth);
         }
 
         public void ResetWidth()

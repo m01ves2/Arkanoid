@@ -85,6 +85,7 @@ namespace Arkanoid.Core
             // чуть “раздвигаем” шар, чтобы не залипал
             _position.Y = paddle.Bounds.Y - Size;
 
+            NormalizeVelocity();
             IncreaseSpeed();
         }
 
@@ -105,6 +106,8 @@ namespace Arkanoid.Core
                     ReflectY();
                     break;
             }
+
+            NormalizeVelocity();
         }
 
         public void ResolveBrickCollision(Brick brick)
@@ -135,6 +138,7 @@ namespace Arkanoid.Core
                 ReflectY();
             }
 
+            NormalizeVelocity();
             IncreaseSpeed();
         }
 
@@ -142,19 +146,13 @@ namespace Arkanoid.Core
         {
             _velocity.X = -_velocity.X;
 
-            NormalizeVelocity();
         }
 
         public void ReflectY()
         {
             _velocity.Y = -_velocity.Y;
-
-            if (MathF.Abs(_velocity.Y) < 0.2f) {
-                _velocity.Y = MathF.Sign(_velocity.Y) * 0.2f;
-            }
-
-            NormalizeVelocity();
         }
+
         public void IncreaseSpeed()
         {
             _speed *= 1.03f;
@@ -180,7 +178,9 @@ namespace Arkanoid.Core
 
         private void NormalizeVelocity()
         {
-            _velocity = Vector2.Normalize(_velocity) * _speed;
+            _velocity = Vector2.Normalize(_velocity);
+            _velocity.Y = Math.Sign(_velocity.Y) * Math.Max(Math.Abs(_velocity.Y), 0.3f);
+            _velocity *= _speed;
         }
     }
 }

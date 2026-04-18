@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml;
 
 namespace Arkanoid.Core
 {
@@ -230,10 +229,10 @@ namespace Arkanoid.Core
 
             SpawnParticles(ball.Bounds.Location.ToVector2());
 
-           // if (Random.Shared.NextDouble() < 0.1) {
+            if (Random.Shared.NextDouble() < 0.2) {
                 //SpawnExtraBall();
                 SpawnBonus(new Vector2(brick.Bounds.Left + brick.Bounds.Width / 2, brick.Bounds.Bottom));
-           // }
+            }
         }
         public void HandlePaddleHit(Ball ball, Paddle paddle)
         {
