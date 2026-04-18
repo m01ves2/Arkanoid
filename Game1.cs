@@ -94,8 +94,7 @@ public class Game1 : Game
 
         var shakeOffset = _gameWorld.GetShakeOffset();
 
-        _spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0)
-);
+        _spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0));
 
         _gameWorld.Draw(_spriteBatch, _whitePixel, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
 

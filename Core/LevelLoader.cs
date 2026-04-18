@@ -36,35 +36,5 @@ namespace Arkanoid.Core
             }
             return result;
         }
-
-            //int bricksInScreenWidth = screenWidth / Brick.Width;
-            //int bricksInScreenHeight = (int)(screenHeight * 0.3 / Brick.Height);
-            //var maxHeight = Math.Min(lines.Length, bricksInScreenHeight);
-            //for(int row = 0; row < maxHeight; row++) {
-            //    var line = lines[row];
-            //    var maxLength = Math.Min(bricksInScreenWidth, line.Length);
-
-            //    for (int col = 0; col < maxLength; col++) {
-            //        int hp = GetBrickHpBySymbol(line[col]);
-            //        if (hp == 0) continue;
-
-            //        var x = col * (Brick.Width + 2) + offsetX;
-            //        var y = row * (Brick.Height + 2) + offsetY;
-            //        var position = new Vector2(x, y);
-            //        Brick brick = new Brick(position, hp);
-            //        bricks.Add(brick);
-            //    }
-            //}
-            //return bricks;
-        //}
-
-        //private static int GetBrickHpBySymbol(char c) => c switch
-        //{
-        //    '#' => int.MaxValue,
-        //    '1' => 1,
-        //    '2' => 2,
-        //    '3' => 3,
-        //    _ => 0,
-        //};
     }
 }

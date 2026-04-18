@@ -49,7 +49,8 @@ namespace Arkanoid.Core
         private Texture2D _paddleTexture;
         private Texture2D _brickTexture;
         private Texture2D _background;
-        private Texture2D _bonusTexture;
+        //private Texture2D _bonusTexture;
+        private Dictionary<BonusType, Texture2D> _bonusTextures;
 
         private SoundEffect _hitSound;
         private SoundEffect _brickSound;
@@ -112,7 +113,14 @@ namespace Arkanoid.Core
             _ballTexture = content.Load<Texture2D>("ball");
             _paddleTexture = content.Load<Texture2D>("paddle");
             _brickTexture = content.Load<Texture2D>("brick");
-            _bonusTexture = content.Load<Texture2D>("bonus");
+            //_bonusTexture = content.Load<Texture2D>("bonus");
+            _bonusTextures = new Dictionary<BonusType, Texture2D>();
+            _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
+            _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
+            _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
+            _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
+            _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
+
 
             _hitSound = content.Load<SoundEffect>("hitSound");
             _brickSound = content.Load<SoundEffect>("brickSound");
@@ -318,6 +326,9 @@ namespace Arkanoid.Core
         private void SlowBall()
         {
             foreach(var ball in _balls) {
+                //if (ball.IsPiercing) {
+                //    ball.SetPiercing(false);
+                //}
                 ball.ResetSpeed();
             }
         }
@@ -364,7 +375,7 @@ namespace Arkanoid.Core
             }
 
             foreach(var bonus in _bonuses) {
-                bonus.Draw(spriteBatch, _bonusTexture);
+                bonus.Draw(spriteBatch, _bonusTextures[bonus.BonusType]);
             }
 
             foreach (var particle in _particles) {
@@ -445,6 +456,7 @@ namespace Arkanoid.Core
             if (_bricks.Where(b => b._brickType != BrickType.Unbreakable).Any()) return;
 
             _state = GameState.Win;
+            StopShake();
         }
 
         private void LoseLife()
@@ -502,7 +514,7 @@ namespace Arkanoid.Core
             _lives = 3;
             _state = GameState.Playing;
 
-            var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level.txt");
+            var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level2.txt");
             char[,] brickChars = LevelLoader.Load(path);
             MakeBricks(brickChars, _screenWidth, _screenHeight);
 

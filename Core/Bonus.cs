@@ -15,8 +15,8 @@ namespace Arkanoid.Core
     {
         private Vector2 _position;
 
-        public const int Width = 58;
-        public const int Height = 18;
+        public const int Width = 48;
+        public const int Height = 38;
 
         public BonusType BonusType { get; init; }
         private Vector2 _velocity;
@@ -44,17 +44,7 @@ namespace Arkanoid.Core
         public void Draw(SpriteBatch spriteBatch, Texture2D texture)
         {
             var rect = new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
-            Color color = BonusType switch
-            {
-                BonusType.ExpandPaddle => Color.Green,
-                BonusType.ShrinkPaddle => Color.Orange,
-                BonusType.MultiBall => Color.Yellow,
-                BonusType.PiercingBall => Color.Red,
-                BonusType.SlowBall => Color.Blue,
-                _ => Color.White,
-            };
-
-            spriteBatch.Draw(texture, rect, color);
+            spriteBatch.Draw(texture, rect, Color.White);
         }
     }
 }
