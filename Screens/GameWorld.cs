@@ -1,7 +1,8 @@
-﻿using Arkanoid.Systems;
+﻿using Arkanoid.Core;
+using Arkanoid.Screens.Resources;
+using Arkanoid.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -9,17 +10,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Arkanoid.Core
+namespace Arkanoid.Screens
 {
-    public enum GameState
-    {
-        Playing,
-        GameOver,
-        Menu,
-        Win,
-    }
-
-    public class GameWorld
+    public class GameWorld : Screen
     {
         public Paddle Paddle => _paddle;
         private Paddle _paddle;
@@ -28,8 +21,6 @@ namespace Arkanoid.Core
         private List<Particle> _particles = new List<Particle>();
         private List<Bonus> _bonuses = new List<Bonus>();
 
-        //const int BrickWidth = 78;
-        //const int BrickHeight = 18;
         const int Spacing = 2;
         const int OffsetX = 1;
         const int OffsetY = 40;
@@ -38,17 +29,17 @@ namespace Arkanoid.Core
         private float _shakeTime;
         private float _shakeStrength;
 
-        private GameState _state = GameState.Menu;
+        //private GameState _state = GameState.Menu;
         private int _score;
         private int _lives = 3;
 
         private SpriteFont _font;
 
+        private Texture2D _pixel;
         private Texture2D _ballTexture;
         private Texture2D _paddleTexture;
         private Texture2D _brickTexture;
         private Texture2D _background;
-        //private Texture2D _bonusTexture;
         private Dictionary<BonusType, Texture2D> _bonusTextures;
 
         private SoundEffect _hitSound;
@@ -56,19 +47,28 @@ namespace Arkanoid.Core
         private SoundEffect _loseSound;
         //private Song _music;
 
-        private int _screenWidth;
-        private int _screenHeight;
-
-        public GameWorld(int screenWidth, int screenHeight) //todo screenWidth, screenHeight
+        public GameWorld(GameResources gameResources, GameAssets gameAssets, GameSettings gameSettings) : base(gameResources)
         {
-            _screenWidth = screenWidth;
-            _screenHeight = screenHeight;
-
-            //_paddle = new Paddle(new Vector2(400, 500));
             _paddle = new Paddle(new Vector2(_screenWidth / 2 - 120 / 2, _screenHeight - 50));
-            //var ball = new Ball(new Vector2(400, 300));
-            //var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
-            //_balls.Add(ball);
+
+            //    _pixel = pixel; //pixel — это инструмент рисования, создаётся в Game1 с помощью GraphicsDevice. используем для рисования частиц
+            //    _ballTexture = content.Load<Texture2D>("ball");
+            //    _paddleTexture = content.Load<Texture2D>("paddle");
+            //    _brickTexture = content.Load<Texture2D>("brick");
+            //    //_bonusTexture = content.Load<Texture2D>("bonus");
+            //    _bonusTextures = new Dictionary<BonusType, Texture2D>();
+            //    _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
+            //    _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
+            //    _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
+            //    _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
+            //    _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
+
+
+            //    _hitSound = content.Load<SoundEffect>("hitSound");
+            //    _brickSound = content.Load<SoundEffect>("brickSound");
+            //    _loseSound = content.Load<SoundEffect>("loseSound");
+            //    _background = content.Load<Texture2D>("background");
+
         }
 
         public void MakeBricks(char[,] brickChars, int screenWidth, int screenHeight)
@@ -105,32 +105,33 @@ namespace Arkanoid.Core
             _ => BrickType.None
         };
 
-        public void LoadContent(ContentManager content)
+        //public void LoadContent(ContentManager content, Texture2D pixel) //TODO перенести всё по классам, и в ресурсные DTO
+        //{
+        //    _font = content.Load<SpriteFont>("font");
+
+        //    _pixel = pixel; //pixel — это инструмент рисования, создаётся в Game1 с помощью GraphicsDevice. используем для рисования частиц
+        //    _ballTexture = content.Load<Texture2D>("ball");
+        //    _paddleTexture = content.Load<Texture2D>("paddle");
+        //    _brickTexture = content.Load<Texture2D>("brick");
+        //    //_bonusTexture = content.Load<Texture2D>("bonus");
+        //    _bonusTextures = new Dictionary<BonusType, Texture2D>();
+        //    _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
+        //    _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
+        //    _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
+        //    _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
+        //    _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
+
+
+        //    _hitSound = content.Load<SoundEffect>("hitSound");
+        //    _brickSound = content.Load<SoundEffect>("brickSound");
+        //    _loseSound = content.Load<SoundEffect>("loseSound");
+        //    _background = content.Load<Texture2D>("background");
+        //}
+
+        public override ScreenResult Update(GameTime gameTime)
         {
-            _font = content.Load<SpriteFont>("font");
-
-            _ballTexture = content.Load<Texture2D>("ball");
-            _paddleTexture = content.Load<Texture2D>("paddle");
-            _brickTexture = content.Load<Texture2D>("brick");
-            //_bonusTexture = content.Load<Texture2D>("bonus");
-            _bonusTextures = new Dictionary<BonusType, Texture2D>();
-            _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
-            _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
-            _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
-            _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
-            _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
-
-
-            _hitSound = content.Load<SoundEffect>("hitSound");
-            _brickSound = content.Load<SoundEffect>("brickSound");
-            _loseSound = content.Load<SoundEffect>("loseSound");
-            _background = content.Load<Texture2D>("background");
-        }
-
-        public void Update(GameTime gameTime)
-        {
-            if (_state != GameState.Playing)
-                return;
+            //if (_state != GameState.Playing)
+            //    return;
             CheckGameOver();
 
             UpdateSimulation(gameTime);
@@ -142,7 +143,7 @@ namespace Arkanoid.Core
             UpdateEffects(gameTime);
         }
 
-        public void UpdateSimulation(GameTime gameTime)
+        private void UpdateSimulation(GameTime gameTime)
         {
 
             _paddle.Update(gameTime, _screenWidth);
@@ -338,30 +339,9 @@ namespace Arkanoid.Core
                 ball.SetPiercing(true);
         }
 
-        public void Draw(SpriteBatch spriteBatch, Texture2D pixel, int screenWidth, int screenHeight)
+        public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_background, new Rectangle(0, 0, screenWidth, screenHeight), Color.White * 0.8f);
-
-            if (_state == GameState.Menu) {
-                DrawCentered(spriteBatch, "ARKANOID", 200, Color.White);
-                DrawCentered(spriteBatch, "Press ENTER to Start", 300, Color.Gray);
-                return;
-            }
-
-            if (_state == GameState.GameOver) {
-                DrawCentered(spriteBatch, "GAME OVER!", 250, Color.Red);
-                DrawCentered(spriteBatch, $"Score: {_score}", 300, Color.White);
-                DrawCentered(spriteBatch, "Press ENTER to Restart", 350, Color.Gray);
-                return;
-            }
-
-            if (_state == GameState.Win) {
-                DrawCentered(spriteBatch, "YOU WIN!", 250, Color.Green);
-                DrawCentered(spriteBatch, $"Score: {_score}", 300, Color.White);
-                DrawCentered(spriteBatch, "Press ENTER to Restart", 350, Color.Gray);
-                return;
-            }
-
+            spriteBatch.Draw(_background, new Rectangle(0, 0, _screenWidth, _screenHeight), Color.White * 0.8f);
 
             _paddle.Draw(spriteBatch, _paddleTexture);
 
@@ -378,7 +358,7 @@ namespace Arkanoid.Core
             }
 
             foreach (var particle in _particles) {
-                particle.Draw(spriteBatch, pixel);
+                particle.Draw(spriteBatch, _pixel);
             }
 
 
@@ -435,8 +415,6 @@ namespace Arkanoid.Core
 
         public void CheckGameOver()
         {
-            if (_state == GameState.GameOver) return;
-
             for (int i = _balls.Count - 1; i >= 0; i--) {
                 if (_balls[i].Bounds.Y > _screenHeight) {
                     _balls.RemoveAt(i);
@@ -450,8 +428,6 @@ namespace Arkanoid.Core
 
         public void CheckWin()
         {
-            if (_state != GameState.Playing) return;
-
             if (_bricks.Where(b => b._brickType != BrickType.Unbreakable).Any()) return;
 
             _state = GameState.Win;
@@ -511,7 +487,6 @@ namespace Arkanoid.Core
         {
             _score = 0;
             _lives = 3;
-            _state = GameState.Playing;
 
             var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level2.txt");
             char[,] brickChars = LevelLoader.Load(path);
@@ -523,14 +498,6 @@ namespace Arkanoid.Core
         public void Restart()
         {
             StartGame();
-        }
-
-        private void DrawCentered(SpriteBatch spriteBatch, string text, float y, Color color)
-        {
-            var size = _font.MeasureString(text);
-            float x = _screenWidth / 2f - size.X / 2f;
-
-            spriteBatch.DrawString(_font, text, new Vector2(x, y), color);
         }
     }
 }

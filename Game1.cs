@@ -1,4 +1,5 @@
-﻿using Arkanoid.Core;
+﻿using Arkanoid.Screens;
+using Arkanoid.Screens.Resources;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -10,18 +11,21 @@ public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-    private SpriteFont _font;
-    private Song _music;
+    private Texture2D _whitePixel; //pixel — это инструмент рисования, создаётся в Game1 с помощью GraphicsDevice. используем для рисования частиц
+
     private int _screenWidth = 800;
-    private int screenHeight = 600;
+    private int _screenHeight = 600;
+
+    private ScreenManager _screenManager;
+    private GameAssets _assets;
+    private GameResources _resources;
 
     ////fps counter
     //private int _frameCount;
     //private double _elapsedTime;
     //private int _fps;
 
-    private Texture2D _whitePixel;
-    private Core.GameWorld _gameWorld;
+    //private GameWorld _gameWorld;
 
     public Game1()
     {
@@ -30,56 +34,80 @@ public class Game1 : Game
         IsMouseVisible = true;
 
         _graphics.PreferredBackBufferWidth = _screenWidth;
-        _graphics.PreferredBackBufferHeight = screenHeight;
+        _graphics.PreferredBackBufferHeight = _screenHeight;
 
         _graphics.ApplyChanges();
 
-        _music = Content.Load<Song>("background_music");
+        _assets = new GameAssets();
+        _resources = new GameResources();
 
-        MediaPlayer.IsRepeating = true;
-        MediaPlayer.Volume = 0.1f;
-        MediaPlayer.Play(_music);
     }
 
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-        _gameWorld = new Core.GameWorld(_screenWidth, screenHeight);
-        _gameWorld.LoadContent(Content);
+        //_screenManager = new ScreenManager();
+        
+        //_gameWorld = new GameWorld(_screenWidth, screenHeight);
+        //_gameWorld.LoadContent(Content, _whitePixel);
 
         base.Initialize();
     }
 
-    protected override void LoadContent()
+    protected override void LoadContent() //TODO перетащить сюда все загрузки ресурсов
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         // TODO: use this.Content to load your game content here
         _whitePixel = new Texture2D(GraphicsDevice, 1, 1);
         _whitePixel.SetData(new[] { Color.White });
-        _font = Content.Load<SpriteFont>("font");
 
+        _assets.Load(Content);
+        _resources.Load(Content);
+
+        _screenManager = new ScreenManager(new MenuScreen(_assets, _resources, _screenWidth, _screenHeight));
+        //_screenManager.SetScreen();
+        StartMusic();
+    }
+
+    private void StartMusic()
+    {
+        MediaPlayer.IsRepeating = true;
+        MediaPlayer.Volume = 0.1f;
+        MediaPlayer.Play(_resources.Music);
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+        var keyboard = Keyboard.GetState();
+
+        //if (keyboard.IsKeyDown(Keys.Escape))
+            //Exit();
+
+        _screenManager.HandleInput(keyboard);
+        _screenManager.Update(gameTime);
+
+        if (_screenManager.ShouldExit)
             Exit();
 
-        _gameWorld.HandleInput(Keyboard.GetState());
+        //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboard.IsKeyDown(Keys.Escape))
+        //    Exit();
 
-        // TODO: Add your update logic here
-        //_frameCount++;
+        ////_gameWorld.HandleInput(Keyboard.GetState());
 
-        //_elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
+        //// TODO: Add your update logic here
+        ////_frameCount++;
 
-        //if (_elapsedTime >= 1.0) {
-        //    _fps = _frameCount;
-        //    _frameCount = 0;
-        //    _elapsedTime = 0;
-        //}
+        ////_elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
 
-        _gameWorld.Update(gameTime);
+        ////if (_elapsedTime >= 1.0) {
+        ////    _fps = _frameCount;
+        ////    _frameCount = 0;
+        ////    _elapsedTime = 0;
+        ////}
+
+        ////_gameWorld.Update(gameTime);
+        //_screenManager.Update(gameTime);
 
         base.Update(gameTime);
         
@@ -92,11 +120,11 @@ public class Game1 : Game
         // TODO: Add your drawing code here
         //System.Diagnostics.Debug.WriteLine($"FPS: {_fps}");
 
-        var shakeOffset = _gameWorld.GetShakeOffset();
+        //var shakeOffset = _gameWorld.GetShakeOffset();
+        //_spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0));
 
-        _spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0));
-
-        _gameWorld.Draw(_spriteBatch, _whitePixel, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+        //_gameWorld.Draw(_spriteBatch);
+        _screenManager.Draw(_spriteBatch);
 
         _spriteBatch.End();
 
