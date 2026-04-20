@@ -11,6 +11,17 @@ namespace Arkanoid.Core
         {
             var lines = File.ReadAllLines(path);
 
+            return GenerateLevelField(lines);
+        }
+
+        public static char[,] CreateFallbackLevel()
+        {
+            string[] lines = new string[] { "1111111111", "1111111112" };
+            return GenerateLevelField(lines);
+        }
+
+        public static char[,] GenerateLevelField(string[] lines)
+        {
             var maxWidth = 0;
             foreach (var line in lines) {
                 maxWidth = line.Length < maxWidth ? maxWidth : line.Length;

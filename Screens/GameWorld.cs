@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -58,6 +59,9 @@ namespace Arkanoid.Screens
         private string _levelPath;
         //private Song _music;
 
+        private string _warningMessage;
+        private float _warningTimer = 5f;
+
         public GameWorld(GameResources gameResources, GameAssets gameAssets, GameSettings gameSettings) : base(gameResources)
         {
             _paddle = new Paddle(new Vector2(_screenWidth / 2 - 120 / 2, _screenHeight - 50));
@@ -93,30 +97,6 @@ namespace Arkanoid.Screens
             _brickSound = assets.BrickSound;
             _loseSound = assets.LoseSound;
             _background = assets.BackgroundTexture;
-        }
-        public void MakeBricks(char[,] brickChars, int screenWidth, int screenHeight)
-        {
-
-            int bricksInScreenWidth = screenWidth / Brick.Width;
-            int bricksInScreenHeight = (int)(screenHeight * 0.3 / Brick.Height);
-
-            var maxHeight = Math.Min(bricksInScreenHeight, brickChars.GetLength(0));
-            var maxWidth = Math.Min(bricksInScreenWidth, brickChars.GetLength(1));
-            
-            _bricks.Clear();
-
-            for (int row = 0; row < maxHeight; row++) {
-                for (int col = 0; col < maxWidth; col++) {
-                    var brickType = GetBrickTypeBySymbol(brickChars[row, col]);
-                    if (brickType == BrickType.None) continue;
-
-                    var x = col * (Brick.Width + Spacing) + OffsetX;
-                    var y = row * (Brick.Height + Spacing) + OffsetY;
-                    var position = new Vector2(x, y);
-                    Brick brick = new Brick(position, brickType);
-                    _bricks.Add(brick);
-                }
-            }
         }
 
         private static BrickType GetBrickTypeBySymbol(char c) => c switch
@@ -160,6 +140,11 @@ namespace Arkanoid.Screens
 
             if (isExit)
                 return new ScreenResult(ScreenResultType.Menu);
+
+            if (_warningTimer > 0) {
+                float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                _warningTimer -= dt;
+            }
 
             UpdateSimulation(gameTime);
 
@@ -368,6 +353,10 @@ namespace Arkanoid.Screens
         {
             spriteBatch.Draw(_background, new Rectangle(0, 0, _screenWidth, _screenHeight), Color.White * 0.8f);
 
+            if (!string.IsNullOrEmpty(_warningMessage) && _warningTimer > 0) {
+                DrawCentered(spriteBatch, _warningMessage, _screenHeight/2, Color.Yellow);
+            }
+
             if (_state == GameState.Lose) {
                 DrawCentered(spriteBatch, "GAME OVER!", 250, Color.Red);
                 DrawCentered(spriteBatch, $"Score: {_score}", 300, Color.White);
@@ -528,14 +517,52 @@ namespace Arkanoid.Screens
             _score = 0;
             _lives = 3;
 
-            if (string.IsNullOrEmpty(_levelPath))
-                throw new InvalidOperationException("No levels found");
+            char[,] brickChars;
+            if (string.IsNullOrEmpty(_levelPath) || !File.Exists(_levelPath)) {
+                brickChars = LevelLoader.CreateFallbackLevel();
+                _warningMessage = "No level files. Default level loaded";
+                Debug.WriteLine("Level load failed, fallback used");
+            }
+            else {
+                try {
+                    brickChars = LevelLoader.Load(_levelPath);
+                }
+                catch {
+                    brickChars = LevelLoader.CreateFallbackLevel();
+                    _warningMessage = "Level failed to load. Default level started.";
+                    Debug.WriteLine("Level load failed, fallback used");
+                }
+            }
 
-            char[,] brickChars = LevelLoader.Load(_levelPath);
             MakeBricks(brickChars, _screenWidth, _screenHeight);
 
             ResetBall(); // временно, потом уберём хардкод
             _state = GameState.Playing;
+        }
+
+        public void MakeBricks(char[,] brickChars, int screenWidth, int screenHeight)
+        {
+
+            int bricksInScreenWidth = screenWidth / Brick.Width;
+            int bricksInScreenHeight = (int)(screenHeight * 0.3 / Brick.Height);
+
+            var maxHeight = Math.Min(bricksInScreenHeight, brickChars.GetLength(0));
+            var maxWidth = Math.Min(bricksInScreenWidth, brickChars.GetLength(1));
+
+            _bricks.Clear();
+
+            for (int row = 0; row < maxHeight; row++) {
+                for (int col = 0; col < maxWidth; col++) {
+                    var brickType = GetBrickTypeBySymbol(brickChars[row, col]);
+                    if (brickType == BrickType.None) continue;
+
+                    var x = col * (Brick.Width + Spacing) + OffsetX;
+                    var y = row * (Brick.Height + Spacing) + OffsetY;
+                    var position = new Vector2(x, y);
+                    Brick brick = new Brick(position, brickType);
+                    _bricks.Add(brick);
+                }
+            }
         }
 
         public void Restart()
