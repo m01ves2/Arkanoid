@@ -18,7 +18,7 @@ namespace Arkanoid.Core
         private Vector2 _position;
         public const int Width = 78;
         public const int Height = 18;
-        public BrickType _brickType { get; init; }
+        public BrickType _brickType { get; }
         int _hp = 3;
         public int Hp => _hp;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Width, Height);

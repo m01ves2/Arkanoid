@@ -1,7 +1,6 @@
 ﻿using Arkanoid.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
 using System;
 
 namespace Arkanoid.Core
@@ -16,7 +15,8 @@ namespace Arkanoid.Core
         private float _speed = 300f;
         private float _baseSpeed = 300f;
         private const float _maxSpeed = 800f;
-        private const float _acceleration = 8f;
+        //private const float _acceleration = 8f;
+        private const float SpeedMultiplier = 1.03f;
         public Rectangle Bounds => new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
         private Vector2 _previousPosition;
 
@@ -155,7 +155,7 @@ namespace Arkanoid.Core
 
         public void IncreaseSpeed()
         {
-            _speed *= 1.03f;
+            _speed *= SpeedMultiplier;
             _speed = MathF.Min(_speed, _maxSpeed);
         }
 
@@ -179,6 +179,10 @@ namespace Arkanoid.Core
         private void NormalizeVelocity()
         {
             _velocity = Vector2.Normalize(_velocity);
+
+            if (_velocity == Vector2.Zero)
+                _velocity = new Vector2(0, -1);
+
             _velocity.Y = Math.Sign(_velocity.Y) * Math.Max(Math.Abs(_velocity.Y), 0.3f);
             _velocity *= _speed;
         }

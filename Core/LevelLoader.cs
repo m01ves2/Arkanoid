@@ -30,7 +30,7 @@ namespace Arkanoid.Core
                     result[i, j] = c;
                 }
 
-                for (int k = line.Length; k < maxWidth - line.Length; k++) {
+                for (int k = line.Length; k < maxWidth; k++) {
                     result[i, k] = ' ';
                 }
             }

@@ -102,6 +102,8 @@ namespace Arkanoid.Screens
 
             var maxHeight = Math.Min(bricksInScreenHeight, brickChars.GetLength(0));
             var maxWidth = Math.Min(bricksInScreenWidth, brickChars.GetLength(1));
+            
+            _bricks.Clear();
 
             for (int row = 0; row < maxHeight; row++) {
                 for (int col = 0; col < maxWidth; col++) {
@@ -179,7 +181,7 @@ namespace Arkanoid.Screens
                 ball.Update(gameTime);
             }
 
-            for (int i = 0; i < _bonuses.Count; i++) {
+            for (int i = _bonuses.Count - 1; i >= 0; i--) {
                 var bonus = _bonuses[i];
                 bonus.Update(gameTime);
 
@@ -308,7 +310,7 @@ namespace Arkanoid.Screens
 
         private void SpawnBonus(Vector2 position)
         {
-            int i = Random.Shared.Next() % Enum.GetValues<BonusType>().Length;
+            int i = Random.Shared.Next(Enum.GetValues<BonusType>().Length);
 
             var bonusPosition = new Vector2(position.X - Bonus.Width / 2, position.Y);
             Bonus bonus;
@@ -397,7 +399,9 @@ namespace Arkanoid.Screens
             }
 
             foreach(var bonus in _bonuses) {
-                bonus.Draw(spriteBatch, _bonusTextures[bonus.BonusType]);
+                //bonus.Draw(spriteBatch, _bonusTextures[bonus.BonusType]);
+                if(_bonusTextures.TryGetValue(bonus.BonusType, out Texture2D texture))
+                    bonus.Draw(spriteBatch, texture);
             }
 
             foreach (var particle in _particles) {
@@ -504,7 +508,9 @@ namespace Arkanoid.Screens
 
         public override void HandleInput(KeyboardState keyboard)
         {
-            if (keyboard.IsKeyDown(Keys.Escape)) {
+            var current = keyboard;
+
+            if (keyboard.IsKeyDown(Keys.Escape) && _previous.IsKeyUp(Keys.Escape)) {
                 isExit = true;
             }
 
@@ -513,12 +519,17 @@ namespace Arkanoid.Screens
                     StartGame();
                 }
             }
+
+            _previous = current;
         }
 
         private void StartGame()
         {
             _score = 0;
             _lives = 3;
+
+            if (string.IsNullOrEmpty(_levelPath))
+                throw new InvalidOperationException("No levels found");
 
             char[,] brickChars = LevelLoader.Load(_levelPath);
             MakeBricks(brickChars, _screenWidth, _screenHeight);
