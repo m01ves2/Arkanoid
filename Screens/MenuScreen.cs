@@ -17,7 +17,8 @@ namespace Arkanoid.Screens
         private bool _isConfirmed = false;
 
         public MenuScreen(GameResources gameResources) : base(gameResources) 
-        { 
+        {
+            _previous = Keyboard.GetState();
         }
         public override ScreenResult Update(GameTime gameTime)
         {
@@ -35,7 +36,6 @@ namespace Arkanoid.Screens
         public override void Draw(SpriteBatch spriteBatch) //TODO
         {
             DrawCentered(spriteBatch, "ARKANOID", 100, Color.White);
-            //DrawCentered(spriteBatch, "Press ENTER to Start", 300, Color.Gray);
 
             for(int i = 0; i < menuItems.Length; i++) {
                 Color color = ( i == _selectedIndex ) ? Color.Yellow : Color.Gray;
@@ -47,7 +47,7 @@ namespace Arkanoid.Screens
         {
             var current = keyboard;
 
-            if (keyboard.IsKeyDown(Keys.Enter)) {
+            if (current.IsKeyDown(Keys.Enter) && _previous.IsKeyUp(Keys.Enter)) {
                 _isConfirmed = true;
             }
             else if(current.IsKeyDown(Keys.Down) && _previous.IsKeyUp(Keys.Down)) {

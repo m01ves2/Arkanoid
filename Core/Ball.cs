@@ -44,14 +44,8 @@ namespace Arkanoid.Core
             //_velocity = Vector2.Normalize(_velocity) * _speed;
         }
 
-        //public void Draw(SpriteBatch spriteBatch, Texture2D pixel)
-        //{
-        //    var rect = new Rectangle((int)_position.X, (int)_position.Y, Size, Size);
-        //    spriteBatch.Draw(pixel, rect, Color.Yellow);
-        //}
         public void Draw(SpriteBatch spriteBatch, Texture2D texture)
         {
-            //spriteBatch.Draw(texture, _position, Color.White);
             spriteBatch.Draw(texture, new Rectangle((int)_position.X, (int)_position.Y, Size, Size), Color.White);
         }
 
@@ -91,7 +85,6 @@ namespace Arkanoid.Core
 
         public void ResolveWallCollision(WallHitType wallHitType)
         {
-            //return false;
             switch (wallHitType) {
                 //отскок от стен
                 case WallHitType.Left: //левая

@@ -1,22 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
-namespace Arkanoid.Core
+namespace Arkanoid
 {
     public static class LevelLoader
     {
-        private static HashSet<char> allowed = new() { '#', '1', '2', '3', '.', ' ' };
-        public static char[,] Load(string path)
+        private static readonly HashSet<char> allowed = new() { '#', '1', '2', '3', '.', ' ' };
+       public static LevelLoadResult LoadSafe(string path)
         {
-            var lines = File.ReadAllLines(path);
+            try {
+                if (string.IsNullOrEmpty(path) || !File.Exists(path)) {
+                    return new LevelLoadResult( CreateFallbackLevel(), "Default level loaded");
+                }
 
-            return GenerateLevelField(lines);
+                var lines = File.ReadAllLines(path);
+                return new LevelLoadResult( GenerateLevelField(lines), null);
+            }
+            catch {
+                return new LevelLoadResult( CreateFallbackLevel(), "Level failed to load. Default level started.");
+            }
         }
 
         public static char[,] CreateFallbackLevel()
         {
-            string[] lines = new string[] { "1111111111", "1111111112" };
+            string[] lines = new string[] { "111", "111" };
             return GenerateLevelField(lines);
         }
 
@@ -24,7 +33,7 @@ namespace Arkanoid.Core
         {
             var maxWidth = 0;
             foreach (var line in lines) {
-                maxWidth = line.Length < maxWidth ? maxWidth : line.Length;
+                maxWidth = Math.Max(maxWidth, line.Length);
             }
 
             char[,] result = new char[lines.Length, maxWidth];
@@ -35,8 +44,8 @@ namespace Arkanoid.Core
                 for (int j = 0; j < line.Length; j++) {
                     char c = line[j];
                     if (!allowed.Contains(c)) {
-                        c = ' ';
                         System.Diagnostics.Debug.WriteLine($"Warning: invalid symbol '{c}' replaced");
+                        c = ' ';
                     }
                     result[i, j] = c;
                 }

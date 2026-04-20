@@ -91,24 +91,16 @@ public class Game1 : Game
         if (_screenManager.ShouldExit)
             Exit();
 
-        //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || keyboard.IsKeyDown(Keys.Escape))
-        //    Exit();
+        // TODO: Add your update logic here
+        //_frameCount++;
 
-        ////_gameWorld.HandleInput(Keyboard.GetState());
+        //_elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
 
-        //// TODO: Add your update logic here
-        ////_frameCount++;
-
-        ////_elapsedTime += gameTime.ElapsedGameTime.TotalSeconds;
-
-        ////if (_elapsedTime >= 1.0) {
-        ////    _fps = _frameCount;
-        ////    _frameCount = 0;
-        ////    _elapsedTime = 0;
-        ////}
-
-        ////_gameWorld.Update(gameTime);
-        //_screenManager.Update(gameTime);
+        //if (_elapsedTime >= 1.0) {
+        //    _fps = _frameCount;
+        //    _frameCount = 0;
+        //    _elapsedTime = 0;
+        //}
 
         base.Update(gameTime);
         

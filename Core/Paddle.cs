@@ -37,10 +37,6 @@ namespace Arkanoid.Core
 
         public void Draw(SpriteBatch spriteBatch, Texture2D texture)
         {
-            //var rect = new Rectangle((int)_position.X, (int)_position.Y, Width, Height);
-
-            //spriteBatch.Draw(pixel, rect, Color.White);
-            //spriteBatch.Draw(texture, _position, Color.White);
             spriteBatch.Draw(texture, new Rectangle((int)_position.X, (int)_position.Y, Width, Height), Color.White);
         }
 

@@ -110,34 +110,8 @@ namespace Arkanoid.Screens
             _ => BrickType.None
         };
 
-        //public void LoadContent(ContentManager content, Texture2D pixel) //TODO перенести всё по классам, и в ресурсные DTO
-        //{
-        //    _font = content.Load<SpriteFont>("font");
-
-        //    _pixel = pixel; //pixel — это инструмент рисования, создаётся в Game1 с помощью GraphicsDevice. используем для рисования частиц
-        //    _ballTexture = content.Load<Texture2D>("ball");
-        //    _paddleTexture = content.Load<Texture2D>("paddle");
-        //    _brickTexture = content.Load<Texture2D>("brick");
-        //    //_bonusTexture = content.Load<Texture2D>("bonus");
-        //    _bonusTextures = new Dictionary<BonusType, Texture2D>();
-        //    _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
-        //    _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
-        //    _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
-        //    _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
-        //    _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
-
-
-        //    _hitSound = content.Load<SoundEffect>("hitSound");
-        //    _brickSound = content.Load<SoundEffect>("brickSound");
-        //    _loseSound = content.Load<SoundEffect>("loseSound");
-        //    _background = content.Load<Texture2D>("background");
-        //}
-
         public override ScreenResult Update(GameTime gameTime)
         {
-            //if (_state != GameState.Playing)
-            //    return;
-
             if (isExit)
                 return new ScreenResult(ScreenResultType.Menu);
 
@@ -245,7 +219,6 @@ namespace Arkanoid.Screens
             SpawnParticles(ball.Bounds.Location.ToVector2());
 
             if (brick._brickType != BrickType.Unbreakable && Random.Shared.NextDouble() < 0.2) {
-                //SpawnExtraBall();
                 SpawnBonus(new Vector2(brick.Bounds.Left + brick.Bounds.Width / 2, brick.Bounds.Bottom));
             }
         }
@@ -272,8 +245,6 @@ namespace Arkanoid.Screens
 
             _bonuses.Remove(bonus);
 
-            //if (Random.Shared.NextDouble() < 0.1)
-            //    SpawnExtraBall();
             switch (bonus.BonusType) {
                 case BonusType.ExpandPaddle:
                     ExpandPaddle();
@@ -485,7 +456,6 @@ namespace Arkanoid.Screens
         private void ResetBall()
         {
             var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
-            //var ball = new Ball(new Vector2(_screenWidth / 2f, _screenHeight / 2f));
             _balls.Clear();
             _balls.Add(ball);
         }
@@ -517,26 +487,15 @@ namespace Arkanoid.Screens
             _score = 0;
             _lives = 3;
 
-            char[,] brickChars;
-            if (string.IsNullOrEmpty(_levelPath) || !File.Exists(_levelPath)) {
-                brickChars = LevelLoader.CreateFallbackLevel();
-                _warningMessage = "No level files. Default level loaded";
-                Debug.WriteLine("Level load failed, fallback used");
-            }
-            else {
-                try {
-                    brickChars = LevelLoader.Load(_levelPath);
-                }
-                catch {
-                    brickChars = LevelLoader.CreateFallbackLevel();
-                    _warningMessage = "Level failed to load. Default level started.";
-                    Debug.WriteLine("Level load failed, fallback used");
-                }
+            var result = LevelLoader.LoadSafe(_levelPath);
+
+            if (!string.IsNullOrEmpty(result.ErrorMessage)) {
+                _warningMessage = result.ErrorMessage;
             }
 
-            MakeBricks(brickChars, _screenWidth, _screenHeight);
+            MakeBricks(result.Field, _screenWidth, _screenHeight);
 
-            ResetBall(); // временно, потом уберём хардкод
+            ResetBall();
             _state = GameState.Playing;
         }
 
