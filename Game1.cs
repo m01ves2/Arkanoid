@@ -19,6 +19,7 @@ public class Game1 : Game
     private ScreenManager _screenManager;
     private GameAssets _assets;
     private GameResources _resources;
+    private GameSettings _gameSettings;
 
     ////fps counter
     //private int _frameCount;
@@ -40,7 +41,7 @@ public class Game1 : Game
 
         _assets = new GameAssets();
         _resources = new GameResources();
-
+        _gameSettings = new GameSettings();
     }
 
     protected override void Initialize()
@@ -63,9 +64,9 @@ public class Game1 : Game
         _whitePixel.SetData(new[] { Color.White });
 
         _assets.Load(Content);
-        _resources.Load(Content);
+        _resources.Load(Content, _whitePixel, _screenWidth, _screenHeight);
 
-        _screenManager = new ScreenManager(new MenuScreen(_assets, _resources, _screenWidth, _screenHeight));
+        _screenManager = new ScreenManager(new MenuScreen(_resources), _resources, _assets, _gameSettings);
         //_screenManager.SetScreen();
         StartMusic();
     }
@@ -122,7 +123,7 @@ public class Game1 : Game
 
         //var shakeOffset = _gameWorld.GetShakeOffset();
         //_spriteBatch.Begin(transformMatrix: Matrix.CreateTranslation(shakeOffset.X, shakeOffset.Y, 0));
-
+        _spriteBatch.Begin();
         //_gameWorld.Draw(_spriteBatch);
         _screenManager.Draw(_spriteBatch);
 

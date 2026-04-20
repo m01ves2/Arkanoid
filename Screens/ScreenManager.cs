@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 using System.Runtime;
 
 namespace Arkanoid.Screens
@@ -17,10 +18,11 @@ namespace Arkanoid.Screens
         private bool _shouldExit = false;
         public bool ShouldExit => _shouldExit;
 
-        public ScreenManager(Screen startScreen, GameResources resources, GameSettings settings)
+        public ScreenManager(Screen startScreen, GameResources resources, GameAssets assets, GameSettings settings)
         {
             _currentScreen = startScreen;
             _resources = resources;
+            _assets = assets;
             _settings = settings;
         }
 

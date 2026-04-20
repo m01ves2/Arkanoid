@@ -13,6 +13,7 @@ namespace Arkanoid.Screens
         public abstract ScreenResult Update(GameTime gameTime);
         public abstract void Draw(SpriteBatch spriteBatch);
         public abstract void HandleInput(KeyboardState keyboard);
+        protected KeyboardState _previous;
 
         public Screen(GameResources gameResources)
         {

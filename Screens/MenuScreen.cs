@@ -34,30 +34,34 @@ namespace Arkanoid.Screens
 
         public override void Draw(SpriteBatch spriteBatch) //TODO
         {
-            DrawCentered(spriteBatch, "ARKANOID", 200, Color.White);
+            DrawCentered(spriteBatch, "ARKANOID", 100, Color.White);
             //DrawCentered(spriteBatch, "Press ENTER to Start", 300, Color.Gray);
 
             for(int i = 0; i < menuItems.Length; i++) {
-                Color color = ( i == _selectedIndex ) ? Color.YellowGreen : Color.Gray;
-                DrawCentered(spriteBatch, menuItems[i], 300 + i * 100, color);
+                Color color = ( i == _selectedIndex ) ? Color.Yellow : Color.Gray;
+                DrawCentered(spriteBatch, menuItems[i], 200 + i * 50, color);
             }
         }
 
         public override void HandleInput(KeyboardState keyboard)
         {
+            var current = keyboard;
+
             if (keyboard.IsKeyDown(Keys.Enter)) {
                 _isConfirmed = true;
             }
-            else if(keyboard.IsKeyDown(Keys.Up)) {
+            else if(current.IsKeyDown(Keys.Down) && _previous.IsKeyUp(Keys.Down)) {
                 _selectedIndex++;
-                if (_selectedIndex > menuItems.Length) 
+                if (_selectedIndex > menuItems.Length - 1) 
                     _selectedIndex = menuItems.Length - 1;
             }
-            else if (keyboard.IsKeyDown(Keys.Up)) {
+            else if (current.IsKeyDown(Keys.Up) && _previous.IsKeyUp(Keys.Up)) {
                 _selectedIndex--;
                 if(_selectedIndex < 0) 
                     _selectedIndex = 0;
             }
+
+            _previous = current;
         }
 
     }

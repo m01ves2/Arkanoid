@@ -9,9 +9,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace Arkanoid.Screens
 {
+    public enum GameState
+    {
+        Playing,
+        Win,
+        Lose
+    }
     public class GameWorld : Screen
     {
         public Paddle Paddle => _paddle;
@@ -25,11 +32,13 @@ namespace Arkanoid.Screens
         const int OffsetX = 1;
         const int OffsetY = 40;
 
+        private GameState _state = GameState.Playing;
+        private bool isExit = false;
+
         //screen shaking
         private float _shakeTime;
         private float _shakeStrength;
 
-        //private GameState _state = GameState.Menu;
         private int _score;
         private int _lives = 3;
 
@@ -45,32 +54,46 @@ namespace Arkanoid.Screens
         private SoundEffect _hitSound;
         private SoundEffect _brickSound;
         private SoundEffect _loseSound;
+
+        private string _levelPath;
         //private Song _music;
 
         public GameWorld(GameResources gameResources, GameAssets gameAssets, GameSettings gameSettings) : base(gameResources)
         {
             _paddle = new Paddle(new Vector2(_screenWidth / 2 - 120 / 2, _screenHeight - 50));
 
-            //    _pixel = pixel; //pixel — это инструмент рисования, создаётся в Game1 с помощью GraphicsDevice. используем для рисования частиц
-            //    _ballTexture = content.Load<Texture2D>("ball");
-            //    _paddleTexture = content.Load<Texture2D>("paddle");
-            //    _brickTexture = content.Load<Texture2D>("brick");
-            //    //_bonusTexture = content.Load<Texture2D>("bonus");
-            //    _bonusTextures = new Dictionary<BonusType, Texture2D>();
-            //    _bonusTextures[BonusType.ExpandPaddle] = content.Load<Texture2D>("bonus_expand");
-            //    _bonusTextures[BonusType.ShrinkPaddle] = content.Load<Texture2D>("bonus_shrink");
-            //    _bonusTextures[BonusType.MultiBall] = content.Load<Texture2D>("bonus_multiball");
-            //    _bonusTextures[BonusType.SlowBall] = content.Load<Texture2D>("bonus_slow");
-            //    _bonusTextures[BonusType.PiercingBall] = content.Load<Texture2D>("bonus_piercing");
-
-
-            //    _hitSound = content.Load<SoundEffect>("hitSound");
-            //    _brickSound = content.Load<SoundEffect>("brickSound");
-            //    _loseSound = content.Load<SoundEffect>("loseSound");
-            //    _background = content.Load<Texture2D>("background");
-
+            LoadGameResources(gameResources);
+            LoadGameSettings(gameSettings);
+            LoadGameAssets(gameAssets);
+            StartGame();
         }
 
+        private void LoadGameResources(GameResources gameResources)
+        {
+            _font = gameResources.Font;
+            _screenHeight = gameResources.ScreenHeight;
+            _screenWidth = gameResources.ScreenWidth;
+            _pixel = gameResources._whitePixel;
+        }
+
+        private void LoadGameSettings(GameSettings gameSettings)
+        {
+            _levelPath = gameSettings.SelectedLevel;
+        }
+
+        private void LoadGameAssets(GameAssets assets)
+        {
+            _ballTexture = assets.BallTexture;
+            _paddleTexture = assets.PaddleTexture;
+            _brickTexture = assets.BrickTexture;
+
+            _bonusTextures = assets.BonusTextures;
+
+            _hitSound = assets.HitSound;
+            _brickSound = assets.BrickSound;
+            _loseSound = assets.LoseSound;
+            _background = assets.BackgroundTexture;
+        }
         public void MakeBricks(char[,] brickChars, int screenWidth, int screenHeight)
         {
 
@@ -132,15 +155,19 @@ namespace Arkanoid.Screens
         {
             //if (_state != GameState.Playing)
             //    return;
-            CheckGameOver();
+
+            if (isExit)
+                return new ScreenResult(ScreenResultType.Menu);
 
             UpdateSimulation(gameTime);
 
             HandleCollisions();
 
+            UpdateEffects(gameTime);
+ 
             UpdateGameState();
 
-            UpdateEffects(gameTime);
+            return null;
         }
 
         private void UpdateSimulation(GameTime gameTime)
@@ -230,7 +257,7 @@ namespace Arkanoid.Screens
 
             SpawnParticles(ball.Bounds.Location.ToVector2());
 
-            if (Random.Shared.NextDouble() < 0.2) {
+            if (brick._brickType != BrickType.Unbreakable && Random.Shared.NextDouble() < 0.2) {
                 //SpawnExtraBall();
                 SpawnBonus(new Vector2(brick.Bounds.Left + brick.Bounds.Width / 2, brick.Bounds.Bottom));
             }
@@ -312,17 +339,14 @@ namespace Arkanoid.Screens
             var ball = new Ball(new Vector2(_paddle.Bounds.Left + _paddle.Bounds.Width / 2, _paddle.Bounds.Top - Ball.Size));
             _balls.Add(ball);
         }
-
         private void ExpandPaddle()
         {
             _paddle.Expand(30);
         }
-
         private void ShrinkPaddle()
         {
             _paddle.Expand(-30);
         }
-
         private void SlowBall()
         {
             foreach(var ball in _balls) {
@@ -332,7 +356,6 @@ namespace Arkanoid.Screens
                 ball.ResetSpeed();
             }
         }
-
         private void PiercingBall()
         {
             foreach (var ball in _balls)
@@ -342,6 +365,26 @@ namespace Arkanoid.Screens
         public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(_background, new Rectangle(0, 0, _screenWidth, _screenHeight), Color.White * 0.8f);
+
+            if (_state == GameState.Lose) {
+                DrawCentered(spriteBatch, "GAME OVER!", 250, Color.Red);
+                DrawCentered(spriteBatch, $"Score: {_score}", 300, Color.White);
+                DrawCentered(spriteBatch, "Press ENTER to Restart", 350, Color.Gray);
+                DrawCentered(spriteBatch, "Press ESC to go Menu", 400, Color.Gray);
+                return;
+            }
+
+            if (_state == GameState.Win) {
+                DrawCentered(spriteBatch, "YOU WIN!", 250, Color.Green);
+                DrawCentered(spriteBatch, $"Score: {_score}", 300, Color.White);
+                DrawCentered(spriteBatch, "Press ENTER to Restart", 350, Color.Gray);
+                DrawCentered(spriteBatch, "Press ESC to go Menu", 400, Color.Gray);
+                return;
+            }
+
+            if (isExit) {
+                return;
+            }
 
             _paddle.Draw(spriteBatch, _paddleTexture);
 
@@ -360,11 +403,6 @@ namespace Arkanoid.Screens
             foreach (var particle in _particles) {
                 particle.Draw(spriteBatch, _pixel);
             }
-
-
-            //if (_state == GameState.GameOver) {
-            //    spriteBatch.DrawString(_font, "GAME OVER", new Vector2(300, 250), Color.Red);
-            //}
 
             spriteBatch.DrawString(_font, $"Score: {_score}  Lives: {_lives}", new Vector2(10, 10), Color.White);
         }
@@ -441,7 +479,7 @@ namespace Arkanoid.Screens
             _lives--;
 
             if (_lives <= 0) {
-                _state = GameState.GameOver;
+                _state = GameState.Lose;
                 StopShake();
                 return;
             }
@@ -464,21 +502,15 @@ namespace Arkanoid.Screens
             _bonuses.Clear();
         }
 
-        public void HandleInput(KeyboardState keyboard)
+        public override void HandleInput(KeyboardState keyboard)
         {
-            if (_state == GameState.Menu) {
+            if (keyboard.IsKeyDown(Keys.Escape)) {
+                isExit = true;
+            }
+
+            if(_state == GameState.Win || _state == GameState.Lose) {
                 if (keyboard.IsKeyDown(Keys.Enter)) {
                     StartGame();
-                }
-            }
-            else if (_state == GameState.GameOver) {
-                if (keyboard.IsKeyDown(Keys.Enter)) {
-                    Restart();
-                }
-            }
-            else if (_state == GameState.Win) { //вынес отдельно, потому что, возможно, будут доп действия
-                if (keyboard.IsKeyDown(Keys.Enter)) {
-                    Restart();
                 }
             }
         }
@@ -488,11 +520,11 @@ namespace Arkanoid.Screens
             _score = 0;
             _lives = 3;
 
-            var path = Path.Combine(AppContext.BaseDirectory, "Levels", "level2.txt");
-            char[,] brickChars = LevelLoader.Load(path);
+            char[,] brickChars = LevelLoader.Load(_levelPath);
             MakeBricks(brickChars, _screenWidth, _screenHeight);
 
             ResetBall(); // временно, потом уберём хардкод
+            _state = GameState.Playing;
         }
 
         public void Restart()

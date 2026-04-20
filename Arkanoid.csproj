@@ -31,6 +31,9 @@
     <None Update="Levels\level.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Levels\level1.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Levels\level2.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
